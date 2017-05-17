@@ -238,7 +238,7 @@ __kernel void m00100_m04 (__global pw_t *pws, __global const kernel_rule_t *rule
     we_t = rotl32 ((wb_t ^ w6_t ^ w0_t ^ we_t), 1u); SHA1_STEP (SHA1_F1, c, d, e, a, b, we_t);
     wf_t = rotl32 ((wc_t ^ w7_t ^ w1_t ^ wf_t), 1u); SHA1_STEP (SHA1_F1, b, c, d, e, a, wf_t);
 
-    COMPARE_M_SIMD (d, e, c, b);
+    COMPARE_M_SIMD (d, a, c, b);
   }
 }
 
@@ -497,7 +497,7 @@ __kernel void m00100_s04 (__global pw_t *pws, __global const kernel_rule_t *rule
     we_t = rotl32 ((wb_t ^ w6_t ^ w0_t ^ we_t), 1u); SHA1_STEP (SHA1_F1, c, d, e, a, b, we_t);
     wf_t = rotl32 ((wc_t ^ w7_t ^ w1_t ^ wf_t), 1u); SHA1_STEP (SHA1_F1, b, c, d, e, a, wf_t);
 
-    COMPARE_S_SIMD (d, e, c, b);
+    COMPARE_S_SIMD (d, a, c, b);
   }
 }
 

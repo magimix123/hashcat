@@ -252,7 +252,7 @@ void m00100m (u32 w[16], const u32 pw_len, __global pw_t *pws, __global const ke
     SHA1_STEP (SHA1_F1 , c, d, e, a, b, (c_78s ^ w0s07 ^ w0s08 ^ w0s15 ^ w0s18 ^ w0s20));
     SHA1_STEP (SHA1_F1 , b, c, d, e, a, (c_79s ^ w0s08 ^ w0s22));
 
-    COMPARE_M_SIMD (d, e, c, b);
+    COMPARE_M_SIMD (d, a, c, b);
   }
 }
 
@@ -519,7 +519,7 @@ void m00100s (u32 w[16], const u32 pw_len, __global pw_t *pws, __global const ke
     SHA1_STEP (SHA1_F1 , c, d, e, a, b, (c_78s ^ w0s07 ^ w0s08 ^ w0s15 ^ w0s18 ^ w0s20));
     SHA1_STEP (SHA1_F1 , b, c, d, e, a, (c_79s ^ w0s08 ^ w0s22));
 
-    COMPARE_S_SIMD (d, e, c, b);
+    COMPARE_S_SIMD (d, a, c, b);
   }
 }
 

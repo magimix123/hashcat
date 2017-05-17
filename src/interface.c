@@ -4467,13 +4467,15 @@ int sha1_parse_hash (u8 *input_buf, u32 input_len, hash_t *hash_buf, MAYBE_UNUSE
 
   u32 *digest = (u32 *) hash_buf->digest;
 
-  if (is_valid_hex_string (input_buf, 40) == false) return (PARSER_HASH_ENCODING);
+  // if (is_valid_hex_string (input_buf, 40) == false) return (PARSER_HASH_ENCODING);
+  if (is_valid_hex_string (input_buf, 32) == false) return (PARSER_HASH_ENCODING);
 
   digest[0] = hex_to_u32 ((const u8 *) &input_buf[ 0]);
   digest[1] = hex_to_u32 ((const u8 *) &input_buf[ 8]);
   digest[2] = hex_to_u32 ((const u8 *) &input_buf[16]);
   digest[3] = hex_to_u32 ((const u8 *) &input_buf[24]);
-  digest[4] = hex_to_u32 ((const u8 *) &input_buf[32]);
+  // digest[4] = hex_to_u32 ((const u8 *) &input_buf[32]);
+  digest[4] = 0;
 
   digest[0] = byte_swap_32 (digest[0]);
   digest[1] = byte_swap_32 (digest[1]);
@@ -19268,7 +19270,7 @@ int hashconfig_init (hashcat_ctx_t *hashcat_ctx)
                                             | OPTI_TYPE_NOT_SALTED
                                             | OPTI_TYPE_RAW_HASH;
                  hashconfig->dgst_pos0      = 3;
-                 hashconfig->dgst_pos1      = 4;
+                 hashconfig->dgst_pos1      = 0;
                  hashconfig->dgst_pos2      = 2;
                  hashconfig->dgst_pos3      = 1;
                  break;
