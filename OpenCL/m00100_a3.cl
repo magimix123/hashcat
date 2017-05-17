@@ -502,7 +502,7 @@ void m00100s (u32 w[16], const u32 pw_len, __global pw_t *pws, __global const ke
 
     SHA1_STEP_PE (SHA1_F1, a, b, c, d, e, (c_75s ^ w0s06 ^ w0s12 ^ w0s14));
 
-    if (MATCHES_NONE_VS (e, e_rev)) continue;
+    // if (MATCHES_NONE_VS (e, e_rev)) continue;
 
     SHA1_STEP_PB (SHA1_F1, a, b, c, d, e, 0);
 
