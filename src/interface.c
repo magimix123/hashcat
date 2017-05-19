@@ -242,6 +242,7 @@ static const char HT_15100[] = "Juniper/NetBSD sha1crypt";
 static const char HT_15200[] = "Blockchain, My Wallet, V2";
 static const char HT_15300[] = "DPAPI masterkey file v1 and v2";
 static const char HT_15400[] = "Chacha20";
+static const char HT_15500[] = "Argon2";
 
 static const char HT_99999[] = "Plaintext";
 
@@ -384,6 +385,8 @@ static const char SIGNATURE_ATLASSIAN[]        = "{PKCS5S2}";
 static const char SIGNATURE_NETBSD_SHA1CRYPT[] = "$sha1$";
 static const char SIGNATURE_BLAKE2B[]          = "$BLAKE2$";
 static const char SIGNATURE_CHACHA20[]         = "$Chacha20$";
+static const char SIGNATURE_ARGON2D[]          = "$argon2d$";
+static const char SIGNATURE_ARGON2I[]          = "$argon2i$";
 
 /**
  * decoder / encoder
@@ -5477,6 +5480,91 @@ int blake2b_parse_hash (u8 *input_buf, u32 input_len, hash_t *hash_buf, MAYBE_UN
   return (PARSER_OK);
 }
 
+int argon2_parse_hash (u8 *input_buf, u32 input_len, hash_t *hash_buf, MAYBE_UNUSED const hashconfig_t *hashconfig)
+{
+/*
+Type:		Argon2d
+Iterations:	3 
+Memory:		4096 KiB
+Parallelism:	1 
+Hash:		257aadd062c040e70deeaa10c1601d3e51cba1a014a88cca273cbc27313ff465
+Encoded:	$argon2d$v=19$m=4096,t=3,p=1$MTIzNDU2Nzg$JXqt0GLAQOcN7qoQwWAdPlHLoaAUqIzKJzy8JzE/9GU
+*/
+
+  if ((input_len < DISPLAY_LEN_MIN_15500) || (input_len > DISPLAY_LEN_MAX_15500)) return (PARSER_GLOBAL_LENGTH);
+
+  u64      *digest = (u64 *) hash_buf->digest;
+  salt_t   *salt   = hash_buf->salt;
+  argon2_t *argon2 = (argon2_t *) hash_buf->esalt;
+ 
+  if      (memcmp (SIGNATURE_ARGON2D, input_buf, 9)) argon2->mode = 'd';
+  else if (memcmp (SIGNATURE_ARGON2I, input_buf, 9)) argon2->mode = 'i';
+  else    return (PARSER_SIGNATURE_UNMATCHED);
+
+  u8 *saved_marker;
+
+  u8 *parameters_marker = input_buf + 9;
+  if (parameters_marker[0] != 'v') return (PARSER_SALT_VALUE);
+
+  argon2->v = atoi ((const char *)parameters_marker + 2);
+  if (argon2->v != 0x10 && argon2->v != 0x13) return (PARSER_SALT_VALUE);
+
+  parameters_marker = (u8 *) strchr ((const char *) parameters_marker, '$') + 1;
+  if (parameters_marker == NULL) return (PARSER_SEPARATOR_UNMATCHED);
+
+  saved_marker = parameters_marker;
+
+  while (parameters_marker != NULL)
+  {
+    switch (parameters_marker[0])
+    {
+      case 'm': argon2->m = atoi ((const char *)parameters_marker + 2);
+                break;
+      case 't': argon2->t = atoi ((const char *)parameters_marker + 2);
+                break;
+      case 'p': argon2->p = atoi ((const char *)parameters_marker + 2);
+                break;
+    }
+
+    parameters_marker = (u8 *) strchr ((const char *) parameters_marker, ',') + 1;
+  }
+
+  if (argon2->t <    1)      return (PARSER_SALT_VALUE);
+  if (argon2->p <    1)      return (PARSER_SALT_VALUE);
+  if (argon2->m < 1024  ||                                  \
+     (argon2->m & 1023) != 0) return (PARSER_SALT_VALUE);
+
+  u8 *salt_marker   = (u8 *) strchr ((const char *) saved_marker, '$') + 1;
+  if (salt_marker  == NULL) return (PARSER_SEPARATOR_UNMATCHED);
+
+  u8 *digest_marker = (u8 *) strchr ((const char *) salt_marker, '$') + 1;
+  if (digest_marker  == NULL) return (PARSER_SEPARATOR_UNMATCHED);
+
+  u8 *salt_buf_ptr = (u8 *) salt->salt_buf;
+
+  int salt_len = parse_and_store_salt (salt_buf_ptr, salt_marker, digest_marker - salt_marker, hashconfig);
+
+  if (salt_len < 8 || salt_len > 64) return (PARSER_SALT_VALUE);
+
+  salt->salt_len = salt_len;
+
+  u8 tmp_buf[100] = { 0 };
+
+  int base64_decode_len = base64_decode (base64_to_int, (const u8 *) digest_marker, input_len - (digest_marker - input_buf), tmp_buf);
+
+  if (base64_decode_len < 1 || base64_decode_len > 64) return (PARSER_SALT_VALUE);
+
+  digest[0] = ((const u64 *) tmp_buf)[0];
+  digest[1] = ((const u64 *) tmp_buf)[1];
+  digest[2] = ((const u64 *) tmp_buf)[2];
+  digest[3] = ((const u64 *) tmp_buf)[3];
+  digest[4] = ((const u64 *) tmp_buf)[4];
+  digest[5] = ((const u64 *) tmp_buf)[5];
+  digest[6] = ((const u64 *) tmp_buf)[6];
+  digest[7] = ((const u64 *) tmp_buf)[7];
+
+  return (PARSER_OK);
+}
 int chacha20_parse_hash (u8 *input_buf, u32 input_len, hash_t *hash_buf, MAYBE_UNUSED const hashconfig_t *hashconfig)
 {
   if ((input_len < DISPLAY_LEN_MIN_15400) || (input_len > DISPLAY_LEN_MAX_15400)) return (PARSER_GLOBAL_LENGTH);
@@ -15251,6 +15339,7 @@ char *strhashtype (const u32 hash_mode)
     case 15200: return ((char *) HT_15200);
     case 15300: return ((char *) HT_15300);
     case 15400: return ((char *) HT_15400);
+    case 15500: return ((char *) HT_15500);
     case 99999: return ((char *) HT_99999);
   }
 
@@ -18608,6 +18697,10 @@ int ascii_digest (hashcat_ctx_t *hashcat_ctx, char *out_buf, const size_t out_le
         byte_swap_32(ptr[13]),
         byte_swap_32(ptr[14]),
         byte_swap_32(ptr[15]));
+    }
+    else if (hash_type == HASH_TYPE_ARGON2)
+    {
+
     }
     else if (hash_type == HASH_TYPE_CHACHA20)
     {
@@ -22795,6 +22888,23 @@ int hashconfig_init (hashcat_ctx_t *hashcat_ctx)
                  hashconfig->dgst_pos3      = 3;
                  break;
 
+    case 15500:  hashconfig->hash_type      = HASH_TYPE_ARGON2;
+                 hashconfig->salt_type      = SALT_TYPE_EMBEDDED;
+                 hashconfig->attack_exec    = ATTACK_EXEC_OUTSIDE_KERNEL;
+                 hashconfig->opts_type      = OPTS_TYPE_PT_GENERATE_LE
+                                            | OPTS_TYPE_ST_BASE64;
+                 hashconfig->kern_type      = KERN_TYPE_ARGON2;
+                 hashconfig->dgst_size      = DGST_SIZE_8_8;
+                 hashconfig->parse_func     = argon2_parse_hash;
+                 hashconfig->opti_type      = OPTI_TYPE_ZERO_BYTE
+                                            | OPTI_TYPE_USES_BITS_64;
+                 hashconfig->dgst_pos0      = 0;
+                 hashconfig->dgst_pos1      = 1;
+                 hashconfig->dgst_pos2      = 2;
+                 hashconfig->dgst_pos3      = 3;
+                 break;
+
+
     case 99999:  hashconfig->hash_type      = HASH_TYPE_PLAINTEXT;
                  hashconfig->salt_type      = SALT_TYPE_NONE;
                  hashconfig->attack_exec    = ATTACK_EXEC_INSIDE_KERNEL;
@@ -22933,6 +23043,7 @@ int hashconfig_init (hashcat_ctx_t *hashcat_ctx)
     case 14800: hashconfig->esalt_size = sizeof (itunes_backup_t);  break;
     case 15300: hashconfig->esalt_size = sizeof (dpapimk_t);        break;
     case 15400: hashconfig->esalt_size = sizeof (chacha20_t);       break;
+    case 15500: hashconfig->esalt_size = sizeof (argon2_t);         break;
   }
 
   // hook_salt_size
@@ -23037,6 +23148,7 @@ int hashconfig_init (hashcat_ctx_t *hashcat_ctx)
     case 15100: hashconfig->tmp_size = sizeof (pbkdf1_sha1_tmp_t);     break;
     case 15200: hashconfig->tmp_size = sizeof (mywallet_tmp_t);        break;
     case 15300: hashconfig->tmp_size = sizeof (dpapimk_tmp_t);         break;
+    case 15500: hashconfig->tmp_size = sizeof (argon2_tmp_t);          break;
   };
 
   // hook_size

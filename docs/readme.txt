@@ -98,6 +98,7 @@ NVIDIA GPUs require "NVIDIA Driver" (367.x or later)
 - PBKDF2-HMAC-SHA1
 - PBKDF2-HMAC-SHA256
 - PBKDF2-HMAC-SHA512
+- Argon2
 - MyBB
 - phpBB3
 - SMF (Simple Machines Forum)
