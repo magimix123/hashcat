@@ -179,6 +179,7 @@ static const char *USAGE_BIG[] =
   "  12000 | PBKDF2-HMAC-SHA1                                 | Generic KDF",
   "  10900 | PBKDF2-HMAC-SHA256                               | Generic KDF",
   "  12100 | PBKDF2-HMAC-SHA512                               | Generic KDF",
+  "  15500 | Argon2                                           | Generic KDF",
   "     23 | Skype                                            | Network Protocols",
   "   2500 | WPA/WPA2                                         | Network Protocols",
   "   4800 | iSCSI CHAP authentication, MD5(CHAP)             | Network Protocols",
