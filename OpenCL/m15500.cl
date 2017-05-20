@@ -67,8 +67,10 @@ __kernel void m15500_init (__global pw_t *pws, __global const kernel_rule_t *rul
   /**
    * Store tmps
    */
-
-  printf("I was in m15500_init()\n");
+  printf("\n");
+  printf("Digest: %08x%08x%08x%08x\n", digests_buf[digests_offset].digest_buf[0], digests_buf[digests_offset].digest_buf[1], digests_buf[digests_offset].digest_buf[2], digests_buf[digests_offset].digest_buf[3]);
+  printf("Salt:   %08x%08x\n", salt_bufs[salt_pos].salt_buf[0], salt_bufs[salt_pos].salt_buf[1], salt_bufs[salt_pos].salt_buf[2]);
+  printf("Esalt:  mode=%c, v=%d, m=%d, t=%d, p=%d\n", esalt_bufs[salt_pos].mode, esalt_bufs[salt_pos].v, esalt_bufs[salt_pos].m, esalt_bufs[salt_pos].t, esalt_bufs[salt_pos].p);
 }
 
 __kernel void m15500_loop (__global pw_t *pws, __global const kernel_rule_t *rules_buf, __global const comb_t *combs_buf, __global const bf_t *bfs_buf, __global argon2_tmp_t *tmps, __global void *hooks, __global const u32 *bitmaps_buf_s1_a, __global const u32 *bitmaps_buf_s1_b, __global const u32 *bitmaps_buf_s1_c, __global const u32 *bitmaps_buf_s1_d, __global const u32 *bitmaps_buf_s2_a, __global const u32 *bitmaps_buf_s2_b, __global const u32 *bitmaps_buf_s2_c, __global const u32 *bitmaps_buf_s2_d, __global plain_t *plains_buf, __global const digest_t *digests_buf, __global u32 *hashes_shown, __global const salt_t *salt_bufs, __global argon2_t *esalt_bufs, __global u32 *d_return_buf, __global u32 *d_scryptV0_buf, __global u32 *d_scryptV1_buf, __global u32 *d_scryptV2_buf, __global u32 *d_scryptV3_buf, const u32 bitmap_mask, const u32 bitmap_shift1, const u32 bitmap_shift2, const u32 salt_pos, const u32 loop_pos, const u32 loop_cnt, const u32 rules_cnt, const u32 digests_cnt, const u32 digests_offset, const u32 combs_mode, const u32 gid_max)
@@ -91,8 +93,6 @@ __kernel void m15500_loop (__global pw_t *pws, __global const kernel_rule_t *rul
    * Update tmps
    */
 
-  printf("I was in m15500_loop()\n");
-  }
 }
 
 __kernel void m15500_comp (__global pw_t *pws, __global const kernel_rule_t *rules_buf, __global const comb_t *combs_buf, __global const bf_t *bfs_buf, __global argon2_tmp_t *tmps, __global void *hooks, __global const u32 *bitmaps_buf_s1_a, __global const u32 *bitmaps_buf_s1_b, __global const u32 *bitmaps_buf_s1_c, __global const u32 *bitmaps_buf_s1_d, __global const u32 *bitmaps_buf_s2_a, __global const u32 *bitmaps_buf_s2_b, __global const u32 *bitmaps_buf_s2_c, __global const u32 *bitmaps_buf_s2_d, __global plain_t *plains_buf, __global const digest_t *digests_buf, __global u32 *hashes_shown, __global const salt_t *salt_bufs, __global argon2_t *esalt_bufs, __global u32 *d_return_buf, __global u32 *d_scryptV0_buf, __global u32 *d_scryptV1_buf, __global u32 *d_scryptV2_buf, __global u32 *d_scryptV3_buf, const u32 bitmap_mask, const u32 bitmap_shift1, const u32 bitmap_shift2, const u32 salt_pos, const u32 loop_pos, const u32 loop_cnt, const u32 rules_cnt, const u32 digests_cnt, const u32 digests_offset, const u32 combs_mode, const u32 gid_max)
@@ -105,6 +105,5 @@ __kernel void m15500_comp (__global pw_t *pws, __global const kernel_rule_t *rul
    * Mark hashes
    */
 
-  printf("I was in m15500_comp()\n");
 }
 

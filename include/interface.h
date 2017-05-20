@@ -453,6 +453,7 @@ typedef struct argon2
 
 typedef struct argon2_tmp
 {
+  u64 digest_buf[8];
 
 } argon2_tmp_t;
 
