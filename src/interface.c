@@ -5484,6 +5484,7 @@ Parallelism:	1
 Hash:		257aadd062c040e70deeaa10c1601d3e51cba1a014a88cca273cbc27313ff465
 Encoded:	$argon2d$v=19$m=4096,t=3,p=1$MTIzNDU2Nzg$JXqt0GLAQOcN7qoQwWAdPlHLoaAUqIzKJzy8JzE/9GU
 */
+#define ERROR_PTR (void *)1
 
   if ((input_len < DISPLAY_LEN_MIN_15500) || (input_len > DISPLAY_LEN_MAX_15500)) return (PARSER_GLOBAL_LENGTH);
 
@@ -5491,9 +5492,9 @@ Encoded:	$argon2d$v=19$m=4096,t=3,p=1$MTIzNDU2Nzg$JXqt0GLAQOcN7qoQwWAdPlHLoaAUqI
   salt_t   *salt   = hash_buf->salt;
   argon2_t *argon2 = (argon2_t *) hash_buf->esalt;
  
-  if      (memcmp (SIGNATURE_ARGON2D, input_buf, 9)) argon2->mode = 'd';
-  else if (memcmp (SIGNATURE_ARGON2I, input_buf, 9)) argon2->mode = 'i';
-  else    return (PARSER_SIGNATURE_UNMATCHED);
+  if      (memcmp (SIGNATURE_ARGON2D, input_buf, 9) == 0) argon2->mode = 'd';
+  else if (memcmp (SIGNATURE_ARGON2I, input_buf, 9) == 0) argon2->mode = 'i';
+  else    return  (PARSER_SIGNATURE_UNMATCHED);
 
   u8 *saved_marker;
 
@@ -5504,11 +5505,11 @@ Encoded:	$argon2d$v=19$m=4096,t=3,p=1$MTIzNDU2Nzg$JXqt0GLAQOcN7qoQwWAdPlHLoaAUqI
   if (argon2->v != 0x10 && argon2->v != 0x13) return (PARSER_SALT_VALUE);
 
   parameters_marker = (u8 *) strchr ((const char *) parameters_marker, '$') + 1;
-  if (parameters_marker == NULL) return (PARSER_SEPARATOR_UNMATCHED);
+  if (parameters_marker == ERROR_PTR) return (PARSER_SEPARATOR_UNMATCHED);
 
   saved_marker = parameters_marker;
 
-  while (parameters_marker != NULL)
+  while (parameters_marker != ERROR_PTR)
   {
     switch (parameters_marker[0])
     {
@@ -5523,22 +5524,22 @@ Encoded:	$argon2d$v=19$m=4096,t=3,p=1$MTIzNDU2Nzg$JXqt0GLAQOcN7qoQwWAdPlHLoaAUqI
     parameters_marker = (u8 *) strchr ((const char *) parameters_marker, ',') + 1;
   }
 
-  if (argon2->t <    1)      return (PARSER_SALT_VALUE);
-  if (argon2->p <    1)      return (PARSER_SALT_VALUE);
-  if (argon2->m < 1024  ||                                  \
+  if (argon2->t <    1)       return (PARSER_SALT_VALUE);
+  if (argon2->p <    1)       return (PARSER_SALT_VALUE);
+  if (argon2->m < 1024  ||    \
      (argon2->m & 1023) != 0) return (PARSER_SALT_VALUE);
 
-  u8 *salt_marker   = (u8 *) strchr ((const char *) saved_marker, '$') + 1;
-  if (salt_marker  == NULL) return (PARSER_SEPARATOR_UNMATCHED);
+  u8 *salt_marker  = (u8 *) strchr ((const char *) saved_marker, '$') + 1;
+  if (salt_marker  == ERROR_PTR) return (PARSER_SEPARATOR_UNMATCHED);
 
-  u8 *digest_marker = (u8 *) strchr ((const char *) salt_marker, '$') + 1;
-  if (digest_marker  == NULL) return (PARSER_SEPARATOR_UNMATCHED);
+  u8 *digest_marker  = (u8 *) strchr ((const char *) salt_marker, '$') + 1;
+  if (digest_marker  == ERROR_PTR) return (PARSER_SEPARATOR_UNMATCHED);
 
   u8 *salt_buf_ptr = (u8 *) salt->salt_buf;
 
   int salt_len = parse_and_store_salt (salt_buf_ptr, salt_marker, digest_marker - salt_marker, hashconfig);
 
-  if (salt_len < 8 || salt_len > 64) return (PARSER_SALT_VALUE);
+  if (salt_len < 8 || salt_len > 4096) return (PARSER_SALT_VALUE);
 
   salt->salt_len = salt_len;
 
@@ -5550,14 +5551,15 @@ Encoded:	$argon2d$v=19$m=4096,t=3,p=1$MTIzNDU2Nzg$JXqt0GLAQOcN7qoQwWAdPlHLoaAUqI
 
   digest[0] = ((const u64 *) tmp_buf)[0];
   digest[1] = ((const u64 *) tmp_buf)[1];
-  digest[2] = ((const u64 *) tmp_buf)[2];
-  digest[3] = ((const u64 *) tmp_buf)[3];
-  digest[4] = ((const u64 *) tmp_buf)[4];
-  digest[5] = ((const u64 *) tmp_buf)[5];
-  digest[6] = ((const u64 *) tmp_buf)[6];
-  digest[7] = ((const u64 *) tmp_buf)[7];
+  //digest[2] = ((const u64 *) tmp_buf)[2];
+  //digest[3] = ((const u64 *) tmp_buf)[3];
+  //digest[4] = ((const u64 *) tmp_buf)[4];
+  //digest[5] = ((const u64 *) tmp_buf)[5];
+  //digest[6] = ((const u64 *) tmp_buf)[6];
+  //digest[7] = ((const u64 *) tmp_buf)[7];
 
   return (PARSER_OK);
+#undef ERROR_PTR
 }
 int chacha20_parse_hash (u8 *input_buf, u32 input_len, hash_t *hash_buf, MAYBE_UNUSED const hashconfig_t *hashconfig)
 {
