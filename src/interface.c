@@ -5498,9 +5498,17 @@ Encoded:	$argon2d$v=19$m=4096,t=3,p=1$MTIzNDU2Nzg$JXqt0GLAQOcN7qoQwWAdPlHLoaAUqI
   salt_t   *salt   = hash_buf->salt;
   argon2_t *argon2 = (argon2_t *) hash_buf->esalt;
  
-  if      (memcmp (SIGNATURE_ARGON2D, input_buf, 9) == 0) argon2->mode = 'd';
-  else if (memcmp (SIGNATURE_ARGON2I, input_buf, 9) == 0) argon2->mode = 'i';
+  /**
+   * Check Signature
+   */
+
+  if      (memcmp (SIGNATURE_ARGON2D, input_buf, 9) == 0) argon2->y = 0;
+  else if (memcmp (SIGNATURE_ARGON2I, input_buf, 9) == 0) argon2->y = 1;
   else    return  (PARSER_SIGNATURE_UNMATCHED);
+
+  /**
+   * Parse parameters
+   */
 
   u8 *saved_marker;
 
@@ -5535,6 +5543,10 @@ Encoded:	$argon2d$v=19$m=4096,t=3,p=1$MTIzNDU2Nzg$JXqt0GLAQOcN7qoQwWAdPlHLoaAUqI
   if (argon2->m < 1024  ||    \
      (argon2->m & 1023) != 0) return (PARSER_SALT_VALUE);
 
+  /**
+   * Parse Salt & Hash
+   */
+
   u8 *salt_marker  = (u8 *) strchr ((const char *) saved_marker, '$') + 1;
   if (salt_marker  == ERROR_PTR) return (PARSER_SEPARATOR_UNMATCHED);
 
@@ -5547,13 +5559,15 @@ Encoded:	$argon2d$v=19$m=4096,t=3,p=1$MTIzNDU2Nzg$JXqt0GLAQOcN7qoQwWAdPlHLoaAUqI
 
   if (salt_len < 8 || salt_len > 4096) return (PARSER_SALT_VALUE);
 
-  salt->salt_len = salt_len;
+  salt->salt_len = salt_len - 1;
 
   u8 tmp_buf[100] = { 0 };
 
   int base64_decode_len = base64_decode (base64_to_int, (const u8 *) digest_marker, input_len - (digest_marker - input_buf), tmp_buf);
 
-  if (base64_decode_len < 1 || base64_decode_len > 64) return (PARSER_SALT_VALUE);
+  if (base64_decode_len < 4 || base64_decode_len > 64) return (PARSER_SALT_VALUE);
+
+  argon2->l = base64_decode_len;
 
   digest[0] = ((const u64 *) tmp_buf)[0];
   digest[1] = ((const u64 *) tmp_buf)[1];
@@ -18702,7 +18716,7 @@ int ascii_digest (hashcat_ctx_t *hashcat_ctx, char *out_buf, const size_t out_le
     }
     else if (hash_type == HASH_TYPE_ARGON2)
     {
-
+      u32 *ptr = digest_buf;
     }
     else if (hash_type == HASH_TYPE_CHACHA20)
     {

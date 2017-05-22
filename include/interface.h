@@ -443,11 +443,12 @@ typedef struct dpapimk
 
 typedef struct argon2
 {
-  u8  mode;
+  u32 y;
   u32 v;
   u32 m;
   u32 t;
   u32 p;
+  u32 l;
 
 } argon2_t;
 

@@ -1156,6 +1156,10 @@ int choose_kernel (hashcat_ctx_t *hashcat_ctx, hc_device_param_t *device_param, 
 
       if (CL_rc == -1) return -1;
 
+      printf("device_params->pws_buf->i[0]: %08x, pws_cnt: %d\n", device_param->pws_buf[0].i[0], pws_cnt);
+      printf("device_params->pws_buf->i[0]: %08x, pws_cnt: %d\n", device_param->pws_buf[1].i[0], pws_cnt);
+      printf("device_params->pws_buf->i[0]: %08x, pws_cnt: %d\n", device_param->pws_buf[2].i[0], pws_cnt);
+
       CL_rc = run_kernel (hashcat_ctx, device_param, KERN_RUN_1, pws_cnt, false, 0);
 
       if (CL_rc == -1) return -1;
