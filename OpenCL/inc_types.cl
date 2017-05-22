@@ -765,17 +765,20 @@ typedef struct
 
 typedef struct
 {
-  u8  mode;
+  u32 y;
   u32 v;
   u32 m;
   u32 t;
   u32 p;
+  u32 l;
 
 } argon2_t;
 
 typedef struct
 {
   u64 digest_buf[8];
+  u64 h[64];
+  u64 t[2];
 
 } argon2_tmp_t;
 
