@@ -1,6 +1,0 @@
-> Testing hash type 15400 with attack mode 0, markov enabled, single hash, device-type Gpu, vector-width 1.
-[ len 1 ] 
-
-$Chacha20$*0400000000000003*42*0200000000000001*6768696a6b6c6d6e*c9212bc7ef8ef59d:5
-[ len 2 ] $Chacha20$*0400000000000003*42*0200000000000001*6768696a6b6c6d6e*c77af4b4e77e6cca:11
-[ len 3 ] 
