@@ -5571,12 +5571,6 @@ Encoded:	$argon2d$v=19$m=4096,t=3,p=1$MTIzNDU2Nzg$JXqt0GLAQOcN7qoQwWAdPlHLoaAUqI
 
   digest[0] = ((const u64 *) tmp_buf)[0];
   digest[1] = ((const u64 *) tmp_buf)[1];
-  //digest[2] = ((const u64 *) tmp_buf)[2];
-  //digest[3] = ((const u64 *) tmp_buf)[3];
-  //digest[4] = ((const u64 *) tmp_buf)[4];
-  //digest[5] = ((const u64 *) tmp_buf)[5];
-  //digest[6] = ((const u64 *) tmp_buf)[6];
-  //digest[7] = ((const u64 *) tmp_buf)[7];
 
   return (PARSER_OK);
 #undef ERROR_PTR
@@ -22908,7 +22902,8 @@ int hashconfig_init (hashcat_ctx_t *hashcat_ctx)
                  hashconfig->salt_type      = SALT_TYPE_EMBEDDED;
                  hashconfig->attack_exec    = ATTACK_EXEC_OUTSIDE_KERNEL;
                  hashconfig->opts_type      = OPTS_TYPE_PT_GENERATE_LE
-                                            | OPTS_TYPE_ST_BASE64;
+                                            | OPTS_TYPE_ST_BASE64
+                                            | OPTS_TYPE_ST_GENERATE_BE;
                  hashconfig->kern_type      = KERN_TYPE_ARGON2;
                  hashconfig->dgst_size      = DGST_SIZE_8_8;
                  hashconfig->parse_func     = argon2_parse_hash;
