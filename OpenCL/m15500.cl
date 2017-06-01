@@ -42,7 +42,200 @@
     BLAKE2B_G(r,5,v[ 1],v[ 6],v[11],v[12]);   \
     BLAKE2B_G(r,6,v[ 2],v[ 7],v[ 8],v[13]);   \
     BLAKE2B_G(r,7,v[ 3],v[ 4],v[ 9],v[14]);   \
-} while(0)
+  } while(0)
+
+#if VECT_SIZE == 1
+#define p_push( a )                              \
+  do {                                           \
+    p[ index++ ] = a >>  0 & 0xff;               \
+    p[ index++ ] = a >>  8 & 0xff;               \
+    p[ index++ ] = a >> 16 & 0xff;               \
+    p[ index++ ] = a >> 24 & 0xff;               \
+  } while (0)
+#endif
+
+#if VECT_SIZE == 2
+#define p_push( a )                              \
+  do {                                           \
+    p[ index.s0++ ].s0 = a >>  0 & 0xff;         \
+    p[ index.s0++ ].s0 = a >>  8 & 0xff;         \
+    p[ index.s0++ ].s0 = a >> 16 & 0xff;         \
+    p[ index.s0++ ].s0 = a >> 24 & 0xff;         \
+    p[ index.s1++ ].s1 = a >>  0 & 0xff;         \
+    p[ index.s1++ ].s1 = a >>  8 & 0xff;         \
+    p[ index.s1++ ].s1 = a >> 16 & 0xff;         \
+    p[ index.s1++ ].s1 = a >> 24 & 0xff;         \
+  } while (0)
+#endif
+
+#if VECT_SIZE == 4
+#define p_push( a )                              \
+  do {                                           \
+    p[ index.s0++ ].s0 = a >>  0 & 0xff;         \
+    p[ index.s0++ ].s0 = a >>  8 & 0xff;         \
+    p[ index.s0++ ].s0 = a >> 16 & 0xff;         \
+    p[ index.s0++ ].s0 = a >> 24 & 0xff;         \
+    p[ index.s1++ ].s1 = a >>  0 & 0xff;         \
+    p[ index.s1++ ].s1 = a >>  8 & 0xff;         \
+    p[ index.s1++ ].s1 = a >> 16 & 0xff;         \
+    p[ index.s1++ ].s1 = a >> 24 & 0xff;         \
+    p[ index.s2++ ].s2 = a >>  0 & 0xff;         \
+    p[ index.s2++ ].s2 = a >>  8 & 0xff;         \
+    p[ index.s2++ ].s2 = a >> 16 & 0xff;         \
+    p[ index.s2++ ].s2 = a >> 24 & 0xff;         \
+    p[ index.s3++ ].s3 = a >>  0 & 0xff;         \
+    p[ index.s3++ ].s3 = a >>  8 & 0xff;         \
+    p[ index.s3++ ].s3 = a >> 16 & 0xff;         \
+    p[ index.s3++ ].s3 = a >> 24 & 0xff;         \
+  } while (0)
+#endif
+
+#if VECT_SIZE == 8
+#define p_push( a )                              \
+  do {                                           \
+    p[ index.s0++ ].s0 = a >>  0 & 0xff;         \
+    p[ index.s0++ ].s0 = a >>  8 & 0xff;         \
+    p[ index.s0++ ].s0 = a >> 16 & 0xff;         \
+    p[ index.s0++ ].s0 = a >> 24 & 0xff;         \
+    p[ index.s1++ ].s1 = a >>  0 & 0xff;         \
+    p[ index.s1++ ].s1 = a >>  8 & 0xff;         \
+    p[ index.s1++ ].s1 = a >> 16 & 0xff;         \
+    p[ index.s1++ ].s1 = a >> 24 & 0xff;         \
+    p[ index.s2++ ].s2 = a >>  0 & 0xff;         \
+    p[ index.s2++ ].s2 = a >>  8 & 0xff;         \
+    p[ index.s2++ ].s2 = a >> 16 & 0xff;         \
+    p[ index.s2++ ].s2 = a >> 24 & 0xff;         \
+    p[ index.s3++ ].s3 = a >>  0 & 0xff;         \
+    p[ index.s3++ ].s3 = a >>  8 & 0xff;         \
+    p[ index.s3++ ].s3 = a >> 16 & 0xff;         \
+    p[ index.s3++ ].s3 = a >> 24 & 0xff;         \
+    p[ index.s4++ ].s4 = a >>  0 & 0xff;         \
+    p[ index.s4++ ].s4 = a >>  8 & 0xff;         \
+    p[ index.s4++ ].s4 = a >> 16 & 0xff;         \
+    p[ index.s4++ ].s4 = a >> 24 & 0xff;         \
+    p[ index.s5++ ].s5 = a >>  0 & 0xff;         \
+    p[ index.s5++ ].s5 = a >>  8 & 0xff;         \
+    p[ index.s5++ ].s5 = a >> 16 & 0xff;         \
+    p[ index.s5++ ].s5 = a >> 24 & 0xff;         \
+    p[ index.s6++ ].s6 = a >>  0 & 0xff;         \
+    p[ index.s6++ ].s6 = a >>  8 & 0xff;         \
+    p[ index.s6++ ].s6 = a >> 16 & 0xff;         \
+    p[ index.s6++ ].s6 = a >> 24 & 0xff;         \
+    p[ index.s7++ ].s7 = a >>  0 & 0xff;         \
+    p[ index.s7++ ].s7 = a >>  8 & 0xff;         \
+    p[ index.s7++ ].s7 = a >> 16 & 0xff;         \
+    p[ index.s7++ ].s7 = a >> 24 & 0xff;         \
+  } while (0)
+#endif
+
+#if VECT_SIZE == 16
+#define p_push( a )                              \
+  do {                                           \
+    p[ index.s0++ ].s0 = a >>  0 & 0xff;         \
+    p[ index.s0++ ].s0 = a >>  8 & 0xff;         \
+    p[ index.s0++ ].s0 = a >> 16 & 0xff;         \
+    p[ index.s0++ ].s0 = a >> 24 & 0xff;         \
+    p[ index.s1++ ].s1 = a >>  0 & 0xff;         \
+    p[ index.s1++ ].s1 = a >>  8 & 0xff;         \
+    p[ index.s1++ ].s1 = a >> 16 & 0xff;         \
+    p[ index.s1++ ].s1 = a >> 24 & 0xff;         \
+    p[ index.s2++ ].s2 = a >>  0 & 0xff;         \
+    p[ index.s2++ ].s2 = a >>  8 & 0xff;         \
+    p[ index.s2++ ].s2 = a >> 16 & 0xff;         \
+    p[ index.s2++ ].s2 = a >> 24 & 0xff;         \
+    p[ index.s3++ ].s3 = a >>  0 & 0xff;         \
+    p[ index.s3++ ].s3 = a >>  8 & 0xff;         \
+    p[ index.s3++ ].s3 = a >> 16 & 0xff;         \
+    p[ index.s3++ ].s3 = a >> 24 & 0xff;         \
+    p[ index.s4++ ].s4 = a >>  0 & 0xff;         \
+    p[ index.s4++ ].s4 = a >>  8 & 0xff;         \
+    p[ index.s4++ ].s4 = a >> 16 & 0xff;         \
+    p[ index.s4++ ].s4 = a >> 24 & 0xff;         \
+    p[ index.s5++ ].s5 = a >>  0 & 0xff;         \
+    p[ index.s5++ ].s5 = a >>  8 & 0xff;         \
+    p[ index.s5++ ].s5 = a >> 16 & 0xff;         \
+    p[ index.s5++ ].s5 = a >> 24 & 0xff;         \
+    p[ index.s6++ ].s6 = a >>  0 & 0xff;         \
+    p[ index.s6++ ].s6 = a >>  8 & 0xff;         \
+    p[ index.s6++ ].s6 = a >> 16 & 0xff;         \
+    p[ index.s6++ ].s6 = a >> 24 & 0xff;         \
+    p[ index.s7++ ].s7 = a >>  0 & 0xff;         \
+    p[ index.s7++ ].s7 = a >>  8 & 0xff;         \
+    p[ index.s7++ ].s7 = a >> 16 & 0xff;         \
+    p[ index.s7++ ].s7 = a >> 24 & 0xff;         \
+    p[ index.s8++ ].s8 = a >>  0 & 0xff;         \
+    p[ index.s8++ ].s8 = a >>  8 & 0xff;         \
+    p[ index.s8++ ].s8 = a >> 16 & 0xff;         \
+    p[ index.s8++ ].s8 = a >> 24 & 0xff;         \
+    p[ index.s9++ ].s9 = a >>  0 & 0xff;         \
+    p[ index.s9++ ].s9 = a >>  8 & 0xff;         \
+    p[ index.s9++ ].s9 = a >> 16 & 0xff;         \
+    p[ index.s9++ ].s9 = a >> 24 & 0xff;         \
+    p[ index.sa++ ].sa = a >>  0 & 0xff;         \
+    p[ index.sa++ ].sa = a >>  8 & 0xff;         \
+    p[ index.sa++ ].sa = a >> 16 & 0xff;         \
+    p[ index.sa++ ].sa = a >> 24 & 0xff;         \
+    p[ index.sb++ ].sb = a >>  0 & 0xff;         \
+    p[ index.sb++ ].sb = a >>  8 & 0xff;         \
+    p[ index.sb++ ].sb = a >> 16 & 0xff;         \
+    p[ index.sb++ ].sb = a >> 24 & 0xff;         \
+    p[ index.sc++ ].sc = a >>  0 & 0xff;         \
+    p[ index.sc++ ].sc = a >>  8 & 0xff;         \
+    p[ index.sc++ ].sc = a >> 16 & 0xff;         \
+    p[ index.sc++ ].sc = a >> 24 & 0xff;         \
+    p[ index.sd++ ].sd = a >>  0 & 0xff;         \
+    p[ index.sd++ ].sd = a >>  8 & 0xff;         \
+    p[ index.sd++ ].sd = a >> 16 & 0xff;         \
+    p[ index.sd++ ].sd = a >> 24 & 0xff;         \
+    p[ index.se++ ].se = a >>  0 & 0xff;         \
+    p[ index.se++ ].se = a >>  8 & 0xff;         \
+    p[ index.se++ ].se = a >> 16 & 0xff;         \
+    p[ index.se++ ].se = a >> 24 & 0xff;         \
+    p[ index.sf++ ].sf = a >>  0 & 0xff;         \
+    p[ index.sf++ ].sf = a >>  8 & 0xff;         \
+    p[ index.sf++ ].sf = a >> 16 & 0xff;         \
+    p[ index.sf++ ].sf = a >> 24 & 0xff;         \
+  } while (0)
+#endif
+
+inline u32 get_max(const u32x a)
+{
+  u32 r = 0;
+
+  #if VECT_SIZE == 1
+  r = a;
+  #endif
+
+  #if VECT_SIZE >= 2
+  r = r < a.s0 ? a.s0 : r;
+  r = r < a.s1 ? a.s1 : r;
+  #endif
+
+  #if VECT_SIZE >= 4
+  r = r < a.s2 ? a.s2 : r;
+  r = r < a.s3 ? a.s3 : r;
+  #endif
+
+  #if VECT_SIZE >= 8
+  r = r < a.s4 ? a.s4 : r;
+  r = r < a.s5 ? a.s5 : r;
+  r = r < a.s6 ? a.s6 : r;
+  r = r < a.s7 ? a.s7 : r;
+  #endif
+
+  #if VECT_SIZE >=16
+  r = r < a.s8 ? a.s8 : r;
+  r = r < a.s9 ? a.s9 : r;
+  r = r < a.sa ? a.sa : r;
+  r = r < a.sb ? a.sb : r;
+  r = r < a.sc ? a.sc : r;
+  r = r < a.sd ? a.sd : r;
+  r = r < a.se ? a.se : r;
+  r = r < a.sf ? a.sf : r;
+  #endif
+
+  return r;
+}
 
 void blake2b_transform(u64x h[8], u64x t[2], u64x f[2], u64x m[16], u64x v[16], const u64x out_len, const u8 isFinal)
 {
@@ -84,13 +277,6 @@ void blake2b_transform(u64x h[8], u64x t[2], u64x f[2], u64x m[16], u64x v[16], 
     { 14, 10,  4,  8,  9, 15, 13,  6,  1, 12,  0,  2, 11,  7,  5,  3 }
   };
 
-  for (u8 i = 0; i < 8; i++)
-  {
-    printf("h1[%d] = %08x%08x\n", i, h32_from_64(h[i]), l32_from_64(h[i]));
-  }
-
-  printf("t %d, f, %d\n", t[0], f[0]);
-
   BLAKE2B_ROUND( 0);
   BLAKE2B_ROUND( 1);
   BLAKE2B_ROUND( 2);
@@ -113,14 +299,7 @@ void blake2b_transform(u64x h[8], u64x t[2], u64x f[2], u64x m[16], u64x v[16], 
   h[6] = h[6] ^ v[6] ^ v[14];
   h[7] = h[7] ^ v[7] ^ v[15];
 
-  for (u8 i = 0; i < 8; i++)
-  {
-    printf("h2[%d] = %08x%08x\n", i, h32_from_64(h[i]), l32_from_64(h[i]));
-  }
-
 }
-
-
 
 __kernel void m15500_init (__global pw_t *pws, __global const kernel_rule_t *rules_buf, __global const comb_t *combs_buf, __global const bf_t *bfs_buf, __global argon2_tmp_t *tmps, __global void *hooks, __global const u32 *bitmaps_buf_s1_a, __global const u32 *bitmaps_buf_s1_b, __global const u32 *bitmaps_buf_s1_c, __global const u32 *bitmaps_buf_s1_d, __global const u32 *bitmaps_buf_s2_a, __global const u32 *bitmaps_buf_s2_b, __global const u32 *bitmaps_buf_s2_c, __global const u32 *bitmaps_buf_s2_d, __global plain_t *plains_buf, __global const digest_t *digests_buf, __global u32 *hashes_shown, __global const salt_t *salt_bufs, __global argon2_t *esalt_bufs, __global u32 *d_return_buf, __global u32 *d_scryptV0_buf, __global u32 *d_scryptV1_buf, __global u32 *d_scryptV2_buf, __global u32 *d_scryptV3_buf, const u32 bitmap_mask, const u32 bitmap_shift1, const u32 bitmap_shift2, const u32 salt_pos, const u32 loop_pos, const u32 loop_cnt, const u32 rules_cnt, const u32 digests_cnt, const u32 digests_offset, const u32 combs_mode, const u32 gid_max)
 {
@@ -130,7 +309,7 @@ __kernel void m15500_init (__global pw_t *pws, __global const kernel_rule_t *rul
 
   const u32 gid   = get_global_id (0);
 
-  salt_t   salt   =  salt_bufs[salt_pos];
+  salt_t   salt   = salt_bufs[salt_pos];
   argon2_t argon2 = esalt_bufs[salt_pos];
 
   if (gid >= gid_max) return;
@@ -149,7 +328,9 @@ __kernel void m15500_init (__global pw_t *pws, __global const kernel_rule_t *rul
   const u32x pw_len = pws[gid].pw_len;
 
   /**
-   * Init Blake2
+   * Fill byte[] buffer with Argon2 Parameters 
+   * 
+   * H (p, l, m, t, v, y, <P>, P, <S>, S, <K>, K, <X>, X)
    */
 
   u64x m[16] = { 0 };
@@ -158,86 +339,370 @@ __kernel void m15500_init (__global pw_t *pws, __global const kernel_rule_t *rul
   u64x f[ 2] = { 0 };
   u64x t[ 2] = { 0 };
 
-/*
-  m[ 0] = swap32( argon2.p );
-  m[ 1] = swap32( argon2.l );   
-  m[ 2] = swap32( argon2.m );
-  m[ 3] = swap32( argon2.t );
-  m[ 4] = swap32( argon2.v );
-  m[ 5] = swap32( argon2.y );
-  m[ 6] = swap32( pw_len   );
-  m[ 7] = swap32( w0[0]    );
-  m[ 8] = swap32( w0[1]    );
-  m[ 9] = swap32( w0[2]    );
-  m[10] = swap32( w0[3]    );
-  m[11] = swap32( w0[4]    );
-  m[12] = swap32( w0[5]    );
-  m[13] = swap32( w0[6]    );
-  m[14] = swap32( w0[7]    );
-*/
+  u8x   p[128] = { 0 };
+  u32x  index  =   0  ; 
 
-  u8x p[128] = { 0 };
-  u8  index  = 0; 
+  p_push(argon2.p);                                     // p
+  p_push(argon2.l);                                     // l
+  p_push(argon2.m);                                     // m
+  p_push(argon2.t);                                     // t
+  p_push(argon2.v);                                     // v
+  p_push(argon2.y);                                     // y
 
-  p[ index++ ] = argon2.p >>  0 & 0xff;
-  p[ index++ ] = argon2.p >>  8 & 0xff;
-  p[ index++ ] = argon2.p >> 16 & 0xff;
-  p[ index++ ] = argon2.p >> 24 & 0xff;
-  p[ index++ ] = argon2.l >>  0 & 0xff;
-  p[ index++ ] = argon2.l >>  8 & 0xff;
-  p[ index++ ] = argon2.l >> 16 & 0xff;
-  p[ index++ ] = argon2.l >> 24 & 0xff;
-  p[ index++ ] = argon2.m >>  0 & 0xff;
-  p[ index++ ] = argon2.m >>  8 & 0xff;
-  p[ index++ ] = argon2.m >> 16 & 0xff;
-  p[ index++ ] = argon2.m >> 24 & 0xff;
-  p[ index++ ] = argon2.t >>  0 & 0xff;
-  p[ index++ ] = argon2.t >>  8 & 0xff;
-  p[ index++ ] = argon2.t >> 16 & 0xff;
-  p[ index++ ] = argon2.t >> 24 & 0xff;
-  p[ index++ ] = argon2.v >>  0 & 0xff;
-  p[ index++ ] = argon2.v >>  8 & 0xff;
-  p[ index++ ] = argon2.v >> 16 & 0xff;
-  p[ index++ ] = argon2.v >> 24 & 0xff;
-  p[ index++ ] = argon2.y >>  0 & 0xff;
-  p[ index++ ] = argon2.y >>  8 & 0xff;
-  p[ index++ ] = argon2.y >> 16 & 0xff;
-  p[ index++ ] = argon2.y >> 24 & 0xff;
-  p[ index++ ] = pw_len   >>  0 & 0xff;
-  p[ index++ ] = pw_len   >>  8 & 0xff;
-  p[ index++ ] = pw_len   >> 16 & 0xff;
-  p[ index++ ] = pw_len   >> 24 & 0xff;
+                                                        // <P>
+  #if VECT_SIZE == 1
+    p[ index++ ] = pw_len >>  0 & 0xff;
+    p[ index++ ] = pw_len >>  8 & 0xff;
+    p[ index++ ] = pw_len >> 16 & 0xff;
+    p[ index++ ] = pw_len >> 24 & 0xff;
+  #endif
+
+  #if VECT_SIZE >= 2
+    p[ index.s0++ ].s0 = pw_len.s0 >>  0 & 0xff;
+    p[ index.s0++ ].s0 = pw_len.s0 >>  8 & 0xff;
+    p[ index.s0++ ].s0 = pw_len.s0 >> 16 & 0xff;
+    p[ index.s0++ ].s0 = pw_len.s0 >> 24 & 0xff;
+    p[ index.s1++ ].s1 = pw_len.s1 >>  0 & 0xff;
+    p[ index.s1++ ].s1 = pw_len.s1 >>  8 & 0xff;
+    p[ index.s1++ ].s1 = pw_len.s1 >> 16 & 0xff;
+    p[ index.s1++ ].s1 = pw_len.s1 >> 24 & 0xff;
+  #endif
+
+  #if VECT_SIZE >= 4
+    p[ index.s2++ ].s2 = pw_len.s2 >>  0 & 0xff;
+    p[ index.s2++ ].s2 = pw_len.s2 >>  8 & 0xff;
+    p[ index.s2++ ].s2 = pw_len.s2 >> 16 & 0xff;
+    p[ index.s2++ ].s2 = pw_len.s2 >> 24 & 0xff;
+    p[ index.s3++ ].s3 = pw_len.s3 >>  0 & 0xff;
+    p[ index.s3++ ].s3 = pw_len.s3 >>  8 & 0xff;
+    p[ index.s3++ ].s3 = pw_len.s3 >> 16 & 0xff;
+    p[ index.s3++ ].s3 = pw_len.s3 >> 24 & 0xff;
+  #endif
   
-  for (u8 i = 0; i < pw_len; i++)
+  #if VECT_SIZE >= 8
+    p[ index.s4++ ].s4 = pw_len.s4 >>  0 & 0xff;
+    p[ index.s4++ ].s4 = pw_len.s4 >>  8 & 0xff;
+    p[ index.s4++ ].s4 = pw_len.s4 >> 16 & 0xff;
+    p[ index.s4++ ].s4 = pw_len.s4 >> 24 & 0xff;
+    p[ index.s5++ ].s5 = pw_len.s5 >>  0 & 0xff;
+    p[ index.s5++ ].s5 = pw_len.s5 >>  8 & 0xff;
+    p[ index.s5++ ].s5 = pw_len.s5 >> 16 & 0xff;
+    p[ index.s5++ ].s5 = pw_len.s5 >> 24 & 0xff;
+    p[ index.s6++ ].s6 = pw_len.s6 >>  0 & 0xff;
+    p[ index.s6++ ].s6 = pw_len.s6 >>  8 & 0xff;
+    p[ index.s6++ ].s6 = pw_len.s6 >> 16 & 0xff;
+    p[ index.s6++ ].s6 = pw_len.s6 >> 24 & 0xff;
+    p[ index.s7++ ].s7 = pw_len.s7 >>  0 & 0xff;
+    p[ index.s7++ ].s7 = pw_len.s7 >>  8 & 0xff;
+    p[ index.s7++ ].s7 = pw_len.s7 >> 16 & 0xff;
+    p[ index.s7++ ].s7 = pw_len.s7 >> 24 & 0xff;
+  #endif
+
+  #if VECT_SIZE >= 16
+    p[ index.s8++ ].s8 = pw_len.s8 >>  0 & 0xff;
+    p[ index.s8++ ].s8 = pw_len.s8 >>  8 & 0xff;
+    p[ index.s8++ ].s8 = pw_len.s8 >> 16 & 0xff;
+    p[ index.s8++ ].s8 = pw_len.s8 >> 24 & 0xff;
+    p[ index.s9++ ].s9 = pw_len.s9 >>  0 & 0xff;
+    p[ index.s9++ ].s9 = pw_len.s9 >>  8 & 0xff;
+    p[ index.s9++ ].s9 = pw_len.s9 >> 16 & 0xff;
+    p[ index.s9++ ].s9 = pw_len.s9 >> 24 & 0xff;
+    p[ index.sa++ ].sa = pw_len.sa >>  0 & 0xff;
+    p[ index.sa++ ].sa = pw_len.sa >>  8 & 0xff;
+    p[ index.sa++ ].sa = pw_len.sa >> 16 & 0xff;
+    p[ index.sa++ ].sa = pw_len.sa >> 24 & 0xff;
+    p[ index.sb++ ].sb = pw_len.sb >>  0 & 0xff;
+    p[ index.sb++ ].sb = pw_len.sb >>  8 & 0xff;
+    p[ index.sb++ ].sb = pw_len.sb >> 16 & 0xff;
+    p[ index.sb++ ].sb = pw_len.sb >> 24 & 0xff;
+    p[ index.sc++ ].sc = pw_len.sc >>  0 & 0xff;
+    p[ index.sc++ ].sc = pw_len.sc >>  8 & 0xff;
+    p[ index.sc++ ].sc = pw_len.sc >> 16 & 0xff;
+    p[ index.sc++ ].sc = pw_len.sc >> 24 & 0xff;
+    p[ index.sd++ ].sd = pw_len.sd >>  0 & 0xff;
+    p[ index.sd++ ].sd = pw_len.sd >>  8 & 0xff;
+    p[ index.sd++ ].sd = pw_len.sd >> 16 & 0xff;
+    p[ index.sd++ ].sd = pw_len.sd >> 24 & 0xff;
+    p[ index.se++ ].se = pw_len.se >>  0 & 0xff;
+    p[ index.se++ ].se = pw_len.se >>  8 & 0xff;
+    p[ index.se++ ].se = pw_len.se >> 16 & 0xff;
+    p[ index.se++ ].se = pw_len.se >> 24 & 0xff;
+    p[ index.sf++ ].sf = pw_len.sf >>  0 & 0xff;
+    p[ index.sf++ ].sf = pw_len.sf >>  8 & 0xff;
+    p[ index.sf++ ].sf = pw_len.sf >> 16 & 0xff;
+    p[ index.sf++ ].sf = pw_len.sf >> 24 & 0xff;
+  #endif
+
+                                                                                   // P
+  for (u8 i = 0; i < get_max(pw_len); i++)
   {
-    p[ index++ ] = w0[i / 4] >> ((i % 4) * 8) & 0xff;
+    #if VECT_SIZE == 1
+      p[ index++ ] = convert_uchar(w0[i / 4] >> ((i % 4) * 8) & 0xff);
+    #endif 
+
+    #if VECT_SIZE >= 2
+      p[ index.s0++ ].s0 = convert_uchar(w0[i / 4].s0 >> ((i % 4) * 8) & 0xff);
+      p[ index.s1++ ].s1 = convert_uchar(w0[i / 4].s1 >> ((i % 4) * 8) & 0xff);
+    #endif
+
+    #if VECT_SIZE >= 4
+      p[ index.s2++ ].s2 = convert_uchar(w0[i / 4].s2 >> ((i % 4) * 8) & 0xff);
+      p[ index.s3++ ].s3 = convert_uchar(w0[i / 4].s3 >> ((i % 4) * 8) & 0xff);
+    #endif
+
+    #if VECT_SIZE >= 8
+      p[ index.s4++ ].s4 = convert_uchar(w0[i / 4].s4 >> ((i % 4) * 8) & 0xff);
+      p[ index.s5++ ].s5 = convert_uchar(w0[i / 4].s5 >> ((i % 4) * 8) & 0xff);
+      p[ index.s6++ ].s6 = convert_uchar(w0[i / 4].s6 >> ((i % 4) * 8) & 0xff);
+      p[ index.s7++ ].s7 = convert_uchar(w0[i / 4].s7 >> ((i % 4) * 8) & 0xff);
+    #endif
+
+    #if VECT_SIZE >= 16
+      p[ index.s8++ ].s8 = convert_uchar(w0[i / 4].s8 >> ((i % 4) * 8) & 0xff);
+      p[ index.s9++ ].s9 = convert_uchar(w0[i / 4].s9 >> ((i % 4) * 8) & 0xff);
+      p[ index.sa++ ].sa = convert_uchar(w0[i / 4].sa >> ((i % 4) * 8) & 0xff);
+      p[ index.sb++ ].sb = convert_uchar(w0[i / 4].sb >> ((i % 4) * 8) & 0xff);
+      p[ index.sc++ ].sc = convert_uchar(w0[i / 4].sc >> ((i % 4) * 8) & 0xff);
+      p[ index.sd++ ].sd = convert_uchar(w0[i / 4].sd >> ((i % 4) * 8) & 0xff);
+      p[ index.se++ ].se = convert_uchar(w0[i / 4].se >> ((i % 4) * 8) & 0xff);
+      p[ index.sf++ ].sf = convert_uchar(w0[i / 4].sf >> ((i % 4) * 8) & 0xff);
+    #endif
   }
 
-  p[ index++ ] = salt.salt_len >>  0 & 0xff;
-  p[ index++ ] = salt.salt_len >>  8 & 0xff;
-  p[ index++ ] = salt.salt_len >> 16 & 0xff;
-  p[ index++ ] = salt.salt_len >> 24 & 0xff;
+  p_push(salt.salt_len);                                                           // <S>
 
-  for (u8 i = 0; i < salt.salt_len; i++)
-  {  
-    p[ index++ ] = salt.salt_buf[i / 4] >> ((i % 4) * 8) & 0xff;
+  for (u8 i = 0; i < get_max(salt.salt_len); i++)                                  //  S
+  { 
+    #if VECT_SIZE == 1 
+      p[ index++ ] = salt.salt_buf[i / 4] >> ((i % 4) * 8) & 0xff;
+    #endif
+
+    #if VECT_SIZE >= 2
+      p[ index.s0++ ].s0 = salt.salt_buf[i / 4] >> ((i % 4) * 8) & 0xff; 
+      p[ index.s1++ ].s1 = salt.salt_buf[i / 4] >> ((i % 4) * 8) & 0xff;
+    #endif
+
+    #if VECT_SIZE >= 4
+      p[ index.s2++ ].s2 = salt.salt_buf[i / 4] >> ((i % 4) * 8) & 0xff;
+      p[ index.s3++ ].s3 = salt.salt_buf[i / 4] >> ((i % 4) * 8) & 0xff;
+    #endif
+
+    #if VECT_SIZE >= 8
+      p[ index.s4++ ].s4 = salt.salt_buf[i / 4] >> ((i % 4) * 8) & 0xff;
+      p[ index.s5++ ].s5 = salt.salt_buf[i / 4] >> ((i % 4) * 8) & 0xff;
+      p[ index.s6++ ].s6 = salt.salt_buf[i / 4] >> ((i % 4) * 8) & 0xff;
+      p[ index.s7++ ].s7 = salt.salt_buf[i / 4] >> ((i % 4) * 8) & 0xff;
+    #endif
+
+    #if VECT_SIZE >= 16
+      p[ index.s8++ ].s8 = salt.salt_buf[i / 4] >> ((i % 4) * 8) & 0xff;
+      p[ index.s9++ ].s9 = salt.salt_buf[i / 4] >> ((i % 4) * 8) & 0xff;
+      p[ index.sa++ ].sa = salt.salt_buf[i / 4] >> ((i % 4) * 8) & 0xff;
+      p[ index.sb++ ].sb = salt.salt_buf[i / 4] >> ((i % 4) * 8) & 0xff;
+      p[ index.sc++ ].sc = salt.salt_buf[i / 4] >> ((i % 4) * 8) & 0xff;
+      p[ index.sd++ ].sd = salt.salt_buf[i / 4] >> ((i % 4) * 8) & 0xff;
+      p[ index.se++ ].se = salt.salt_buf[i / 4] >> ((i % 4) * 8) & 0xff;
+      p[ index.sf++ ].sf = salt.salt_buf[i / 4] >> ((i % 4) * 8) & 0xff;
+    #endif
   }
+
+  /*
+   * Convert byte[] buffer to 64 bit vectors for Blake2b compress function
+   */
 
   for (u8 i = 0; i < 16; i++)
   {
-    m[i] =  p[i * 8 + 4] <<  0
-         |  p[i * 8 + 5] <<  8
-         |  p[i * 8 + 6] << 16
-         |  p[i * 8 + 7] << 24;
+    #if VECT_SIZE == 1
+      m[i]  ^=  p[i * 8 + 4] <<  0;
+      m[i]  ^=  p[i * 8 + 5] <<  8;
+      m[i]  ^=  p[i * 8 + 6] << 16;
+      m[i]  ^=  p[i * 8 + 7] << 24;
+      m[i] <<=  32;
+      m[i]  ^=  p[i * 8 + 0] <<  0;
+      m[i]  ^=  p[i * 8 + 1] <<  8;
+      m[i]  ^=  p[i * 8 + 2] << 16;
+      m[i]  ^=  p[i * 8 + 3] << 24;
+    #endif  
 
-    m[i] =  m[i] << 32;
+    #if VECT_SIZE >= 2
+      m[i].s0  ^=  p[i * 8 + 4].s0 <<  0;
+      m[i].s0  ^=  p[i * 8 + 5].s0 <<  8;
+      m[i].s0  ^=  p[i * 8 + 6].s0 << 16;
+      m[i].s0  ^=  p[i * 8 + 7].s0 << 24;
+      m[i].s0 <<=                     32;
+      m[i].s0  ^=  p[i * 8 + 0].s0 <<  0;
+      m[i].s0  ^=  p[i * 8 + 1].s0 <<  8;
+      m[i].s0  ^=  p[i * 8 + 2].s0 << 16;
+      m[i].s0  ^=  p[i * 8 + 3].s0 << 24;
 
-    m[i] |= p[i * 8 + 0] <<  0
-         |  p[i * 8 + 1] <<  8
-         |  p[i * 8 + 2] << 16
-         |  p[i * 8 + 3] << 24;
+      m[i].s1  ^=  p[i * 8 + 4].s1 <<  0;
+      m[i].s1  ^=  p[i * 8 + 5].s1 <<  8;
+      m[i].s1  ^=  p[i * 8 + 6].s1 << 16;
+      m[i].s1  ^=  p[i * 8 + 7].s1 << 24;
+      m[i].s1 <<=                     32;
+      m[i].s1  ^=  p[i * 8 + 0].s1 <<  0;
+      m[i].s1  ^=  p[i * 8 + 1].s1 <<  8;
+      m[i].s1  ^=  p[i * 8 + 2].s1 << 16;
+      m[i].s1  ^=  p[i * 8 + 3].s1 << 24;
+    #endif
+
+    #if VECT_SIZE >= 4
+      m[i].s2  ^=  p[i * 8 + 4].s2 <<  0;
+      m[i].s2  ^=  p[i * 8 + 5].s2 <<  8;
+      m[i].s2  ^=  p[i * 8 + 6].s2 << 16;
+      m[i].s2  ^=  p[i * 8 + 7].s2 << 24;
+      m[i].s2 <<=                     32;
+      m[i].s2  ^=  p[i * 8 + 0].s2 <<  0;
+      m[i].s2  ^=  p[i * 8 + 1].s2 <<  8;
+      m[i].s2  ^=  p[i * 8 + 2].s2 << 16;
+      m[i].s2  ^=  p[i * 8 + 3].s2 << 24;
+
+      m[i].s3  ^=  p[i * 8 + 4].s2 <<  0;
+      m[i].s3  ^=  p[i * 8 + 5].s2 <<  8;
+      m[i].s3  ^=  p[i * 8 + 6].s2 << 16;
+      m[i].s3  ^=  p[i * 8 + 7].s2 << 24;
+      m[i].s3 <<=                     32;
+      m[i].s3  ^=  p[i * 8 + 0].s2 <<  0;
+      m[i].s3  ^=  p[i * 8 + 1].s2 <<  8;
+      m[i].s3  ^=  p[i * 8 + 2].s2 << 16;
+      m[i].s3  ^=  p[i * 8 + 3].s2 << 24;
+    #endif
+
+    #if VECT_SIZE >= 8
+      m[i].s4  ^=  p[i * 8 + 4].s4 <<  0;
+      m[i].s4  ^=  p[i * 8 + 5].s4 <<  8;
+      m[i].s4  ^=  p[i * 8 + 6].s4 << 16;
+      m[i].s4  ^=  p[i * 8 + 7].s4 << 24;
+      m[i].s4 <<=                     32;
+      m[i].s4  ^=  p[i * 8 + 0].s4 <<  0;
+      m[i].s4  ^=  p[i * 8 + 1].s4 <<  8;
+      m[i].s4  ^=  p[i * 8 + 2].s4 << 16;
+      m[i].s4  ^=  p[i * 8 + 3].s4 << 24;
+
+      m[i].s5  ^=  p[i * 8 + 4].s5 <<  0;
+      m[i].s5  ^=  p[i * 8 + 5].s5 <<  8;
+      m[i].s5  ^=  p[i * 8 + 6].s5 << 16;
+      m[i].s5  ^=  p[i * 8 + 7].s5 << 24;
+      m[i].s5 <<=                     32;
+      m[i].s5  ^=  p[i * 8 + 0].s5 <<  0;
+      m[i].s5  ^=  p[i * 8 + 1].s5 <<  8;
+      m[i].s5  ^=  p[i * 8 + 2].s5 << 16;
+      m[i].s5  ^=  p[i * 8 + 3].s5 << 24;
+
+      m[i].s6  ^=  p[i * 8 + 4].s6 <<  0;
+      m[i].s6  ^=  p[i * 8 + 5].s6 <<  8;
+      m[i].s6  ^=  p[i * 8 + 6].s6 << 16;
+      m[i].s6  ^=  p[i * 8 + 7].s6 << 24;
+      m[i].s6 <<=                     32;
+      m[i].s6  ^=  p[i * 8 + 0].s6 <<  0;
+      m[i].s6  ^=  p[i * 8 + 1].s6 <<  8;
+      m[i].s6  ^=  p[i * 8 + 2].s6 << 16;
+      m[i].s6  ^=  p[i * 8 + 3].s6 << 24;
+
+      m[i].s7  ^=  p[i * 8 + 4].s7 <<  0;
+      m[i].s7  ^=  p[i * 8 + 5].s7 <<  8;
+      m[i].s7  ^=  p[i * 8 + 6].s7 << 16;
+      m[i].s7  ^=  p[i * 8 + 7].s7 << 24;
+      m[i].s7 <<=                     32;
+      m[i].s7  ^=  p[i * 8 + 0].s7 <<  0;
+      m[i].s7  ^=  p[i * 8 + 1].s7 <<  8;
+      m[i].s7  ^=  p[i * 8 + 2].s7 << 16;
+      m[i].s7  ^=  p[i * 8 + 3].s7 << 24;
+    #endif
+
+    #if VECT_SIZE >= 16
+      m[i].s8  ^=  p[i * 8 + 4].s8 <<  0;
+      m[i].s8  ^=  p[i * 8 + 5].s8 <<  8;
+      m[i].s8  ^=  p[i * 8 + 6].s8 << 16;
+      m[i].s8  ^=  p[i * 8 + 7].s8 << 24;
+      m[i].s8 <<=                     32;
+      m[i].s8  ^=  p[i * 8 + 0].s8 <<  0;
+      m[i].s8  ^=  p[i * 8 + 1].s8 <<  8;
+      m[i].s8  ^=  p[i * 8 + 2].s8 << 16;
+      m[i].s8  ^=  p[i * 8 + 3].s8 << 24;
+
+      m[i].s9  ^=  p[i * 8 + 4].s9 <<  0;
+      m[i].s9  ^=  p[i * 8 + 5].s9 <<  8;
+      m[i].s9  ^=  p[i * 8 + 6].s9 << 16;
+      m[i].s9  ^=  p[i * 8 + 7].s9 << 24;
+      m[i].s9 <<=                     32;
+      m[i].s9  ^=  p[i * 8 + 0].s9 <<  0;
+      m[i].s9  ^=  p[i * 8 + 1].s9 <<  8;
+      m[i].s9  ^=  p[i * 8 + 2].s9 << 16;
+      m[i].s9  ^=  p[i * 8 + 3].s9 << 24;
+
+      m[i].sa  ^=  p[i * 8 + 4].sa <<  0;
+      m[i].sa  ^=  p[i * 8 + 5].sa <<  8;
+      m[i].sa  ^=  p[i * 8 + 6].sa << 16;
+      m[i].sa  ^=  p[i * 8 + 7].sa << 24;
+      m[i].sa <<=                     32;
+      m[i].sa  ^=  p[i * 8 + 0].sa <<  0;
+      m[i].sa  ^=  p[i * 8 + 1].sa <<  8;
+      m[i].sa  ^=  p[i * 8 + 2].sa << 16;
+      m[i].sa  ^=  p[i * 8 + 3].sa << 24;
+
+      m[i].sb  ^=  p[i * 8 + 4].sb <<  0;
+      m[i].sb  ^=  p[i * 8 + 5].sb <<  8;
+      m[i].sb  ^=  p[i * 8 + 6].sb << 16;
+      m[i].sb  ^=  p[i * 8 + 7].sb << 24;
+      m[i].sb <<=                     32;
+      m[i].sb  ^=  p[i * 8 + 0].sb <<  0;
+      m[i].sb  ^=  p[i * 8 + 1].sb <<  8;
+      m[i].sb  ^=  p[i * 8 + 2].sb << 16;
+      m[i].sb  ^=  p[i * 8 + 3].sb << 24;
+
+      m[i].sc  ^=  p[i * 8 + 4].sc <<  0;
+      m[i].sc  ^=  p[i * 8 + 5].sc <<  8;
+      m[i].sc  ^=  p[i * 8 + 6].sc << 16;
+      m[i].sc  ^=  p[i * 8 + 7].sc << 24;
+      m[i].sc <<=                     32;
+      m[i].sc  ^=  p[i * 8 + 0].sc <<  0;
+      m[i].sc  ^=  p[i * 8 + 1].sc <<  8;
+      m[i].sc  ^=  p[i * 8 + 2].sc << 16;
+      m[i].sc  ^=  p[i * 8 + 3].sc << 24;
+
+      m[i].sd  ^=  p[i * 8 + 4].sd <<  0;
+      m[i].sd  ^=  p[i * 8 + 5].sd <<  8;
+      m[i].sd  ^=  p[i * 8 + 6].sd << 16;
+      m[i].sd  ^=  p[i * 8 + 7].sd << 24;
+      m[i].sd <<=                     32;
+      m[i].sd  ^=  p[i * 8 + 0].sd <<  0;
+      m[i].sd  ^=  p[i * 8 + 1].sd <<  8;
+      m[i].sd  ^=  p[i * 8 + 2].sd << 16;
+      m[i].sd  ^=  p[i * 8 + 3].sd << 24;
+
+      m[i].se  ^=  p[i * 8 + 4].se <<  0;
+      m[i].se  ^=  p[i * 8 + 5].se <<  8;
+      m[i].se  ^=  p[i * 8 + 6].se << 16;
+      m[i].se  ^=  p[i * 8 + 7].se << 24;
+      m[i].se <<=                     32;
+      m[i].se  ^=  p[i * 8 + 0].se <<  0;
+      m[i].se  ^=  p[i * 8 + 1].se <<  8;
+      m[i].se  ^=  p[i * 8 + 2].se << 16;
+      m[i].se  ^=  p[i * 8 + 3].se << 24;
+
+      m[i].sf  ^=  p[i * 8 + 4].sf <<  0;
+      m[i].sf  ^=  p[i * 8 + 5].sf <<  8;
+      m[i].sf  ^=  p[i * 8 + 6].sf << 16;
+      m[i].sf  ^=  p[i * 8 + 7].sf << 24;
+      m[i].sf <<=                     32;
+      m[i].sf  ^=  p[i * 8 + 0].sf <<  0;
+      m[i].sf  ^=  p[i * 8 + 1].sf <<  8;
+      m[i].sf  ^=  p[i * 8 + 2].sf << 16;
+      m[i].sf  ^=  p[i * 8 + 3].sf << 24;
+
+    #endif
   }
- 
+  
+  // <K> is set to zero
+  //  K  is dropped
+  // <X> is set to zero
+  //  X  is dropped
+
+  /*
+   * Init0 Blake2b
+   */
+
   h[0]  = BLAKE2B_IV_00; 
   h[0] ^= 0x00000040;      // outlen 
   h[0] ^= 0x00010000;      // fanout
@@ -250,30 +715,50 @@ __kernel void m15500_init (__global pw_t *pws, __global const kernel_rule_t *rul
   h[6]  = BLAKE2B_IV_06;
   h[7]  = BLAKE2B_IV_07;
 
-  u64x total_size = (10 * 4) + pw_len + salt.salt_len;
+  u64x size_in = hl32_to_64(0, pw_len) + salt.salt_len + 40;
 
-  blake2b_transform(h, t, f, m, v, total_size, BLAKE2B_FINAL);
-  
-
-  /**
-   * Store tmps
+  /*
+   * Blake2b Compress
    */
-  
-  printf("\n");
-  printf("Digest:       %08x%08x%08x%08x\n", digests_buf[digests_offset].digest_buf[0], digests_buf[digests_offset].digest_buf[1], digests_buf[digests_offset].digest_buf[2], digests_buf[digests_offset].digest_buf[3]);
-  printf("Password:     %08x%08x%08x%08x\n", w0[0], w0[1], w0[2], w0[3]);
-  printf("Passw Length: %d\n", pw_len);
-  printf("Salt:         %08x%08x, salt_len: %d\n", salt.salt_buf[0], salt_bufs[salt_pos].salt_buf[1], salt_bufs[salt_pos].salt_len);
-  printf("Esalt:        y=%d, v=%d, m=%d, t=%d, p=%d, l=%d\n", esalt_bufs[salt_pos].y, esalt_bufs[salt_pos].v, esalt_bufs[salt_pos].m, esalt_bufs[salt_pos].t, esalt_bufs[salt_pos].p, esalt_bufs[salt_pos].l);
 
-  u8 *m_ptr = (const u8 *)m;
+  blake2b_transform(h, t, f, m, v, size_in, BLAKE2B_FINAL);
 
-  //printf("\nm[x]:\n");
-  for (u8 i = 0; i < 64; i++) printf("%02x", m_ptr[i]);
-  printf("\n01000000200000000010000003000000130000000000000005000000706173737708000000313233343536373800000000000000000000000000000000000000\n");  
-  printf("\nHash: ");
-  for (u8 i = 0; i < 16; i++) printf("%08x", ((const u32 *) h)[i]);
-  printf("\n");
+
+  /*
+   * Save hash vector to tmps buffer
+   */
+ 
+  #if VECT_SIZE == 1
+    for (u8 i = 0; i < 8; i++) tmps[gid].hash[i][ 0] = h[i];
+  #endif
+
+  #if VECT_SIZE >= 2
+    for (u8 i = 0; i < 8; i++) tmps[gid].hash[i][ 0] = h[i].s0;
+    for (u8 i = 0; i < 8; i++) tmps[gid].hash[i][ 1] = h[i].s1;
+  #endif
+
+  #if VECT_SIZE >= 4
+    for (u8 i = 0; i < 8; i++) tmps[gid].hash[i][ 2] = h[i].s2;
+    for (u8 i = 0; i < 8; i++) tmps[gid].hash[i][ 3] = h[i].s3;
+  #endif
+
+  #if VECT_SIZE >= 8
+    for (u8 i = 0; i < 8; i++) tmps[gid].hash[i][ 4] = h[i].s4;
+    for (u8 i = 0; i < 8; i++) tmps[gid].hash[i][ 5] = h[i].s5;
+    for (u8 i = 0; i < 8; i++) tmps[gid].hash[i][ 6] = h[i].s6;
+    for (u8 i = 0; i < 8; i++) tmps[gid].hash[i][ 7] = h[i].s7; 
+  #endif
+
+  #if VECT_SIZE >= 16
+    for (u8 i = 0; i < 8; i++) tmps[gid].hash[i][ 8] = h[i].s8;
+    for (u8 i = 0; i < 8; i++) tmps[gid].hash[i][ 9] = h[i].s9;
+    for (u8 i = 0; i < 8; i++) tmps[gid].hash[i][10] = h[i].sa;
+    for (u8 i = 0; i < 8; i++) tmps[gid].hash[i][11] = h[i].sb;
+    for (u8 i = 0; i < 8; i++) tmps[gid].hash[i][12] = h[i].sc;
+    for (u8 i = 0; i < 8; i++) tmps[gid].hash[i][13] = h[i].sd;
+    for (u8 i = 0; i < 8; i++) tmps[gid].hash[i][14] = h[i].se;
+    for (u8 i = 0; i < 8; i++) tmps[gid].hash[i][15] = h[i].sf;
+  #endif
 }
 
 __kernel void m15500_loop (__global pw_t *pws, __global const kernel_rule_t *rules_buf, __global const comb_t *combs_buf, __global const bf_t *bfs_buf, __global argon2_tmp_t *tmps, __global void *hooks, __global const u32 *bitmaps_buf_s1_a, __global const u32 *bitmaps_buf_s1_b, __global const u32 *bitmaps_buf_s1_c, __global const u32 *bitmaps_buf_s1_d, __global const u32 *bitmaps_buf_s2_a, __global const u32 *bitmaps_buf_s2_b, __global const u32 *bitmaps_buf_s2_c, __global const u32 *bitmaps_buf_s2_d, __global plain_t *plains_buf, __global const digest_t *digests_buf, __global u32 *hashes_shown, __global const salt_t *salt_bufs, __global argon2_t *esalt_bufs, __global u32 *d_return_buf, __global u32 *d_scryptV0_buf, __global u32 *d_scryptV1_buf, __global u32 *d_scryptV2_buf, __global u32 *d_scryptV3_buf, const u32 bitmap_mask, const u32 bitmap_shift1, const u32 bitmap_shift2, const u32 salt_pos, const u32 loop_pos, const u32 loop_cnt, const u32 rules_cnt, const u32 digests_cnt, const u32 digests_offset, const u32 combs_mode, const u32 gid_max)
