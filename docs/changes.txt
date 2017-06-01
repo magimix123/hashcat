@@ -19,6 +19,8 @@
 - Rules: Support added for rule 'eX'
 - Rules: Support added for position 'p' in host mode (using -j or -k)
 - 7-Zip cracking: increased max. data length to 320k and removed AES padding attack to avoid false negatives
+- Rules: Support added for rejection rule '_N' in host mode
+- Dictionary cache: Show time spent for dictionary cache building on startup
 
 ##
 ## Workarounds
@@ -38,6 +40,7 @@
 
 - Fixed a missing type specifier in a function declaration of the RACF kernel
 - Fixed a condition that caused a hybrid attack using a maskfile to not select all wordlists from a wordlist folder
+- Fixed a memory leak that is present when a user is periodically printing hashcat status (using --status-timer)
 
 ##
 ## Technical

@@ -692,6 +692,8 @@ void status_display_machine_readable (hashcat_ctx_t *hashcat_ctx)
 
   fflush (stdout);
 
+  status_status_destroy (hashcat_ctx, hashcat_status);
+
   hcfree (hashcat_status);
 }
 
@@ -1105,6 +1107,8 @@ void status_display (hashcat_ctx_t *hashcat_ctx)
     }
   }
 
+  status_status_destroy (hashcat_ctx, hashcat_status);
+
   hcfree (hashcat_status);
 }
 
@@ -1133,6 +1137,8 @@ void status_benchmark_machine_readable (hashcat_ctx_t *hashcat_ctx)
 
     event_log_info (hashcat_ctx, "%d:%u:%d:%d:%.2f:%" PRIu64, device_id + 1, hash_mode, device_info->corespeed_dev, device_info->memoryspeed_dev, device_info->exec_msec_dev, (u64) (device_info->hashes_msec_dev_benchmark * 1000));
   }
+
+  status_status_destroy (hashcat_ctx, hashcat_status);
 
   hcfree (hashcat_status);
 }
@@ -1178,6 +1184,8 @@ void status_benchmark (hashcat_ctx_t *hashcat_ctx)
       hashcat_status->speed_sec_all);
   }
 
+  status_status_destroy (hashcat_ctx, hashcat_status);
+
   hcfree (hashcat_status);
 }
 
@@ -1202,6 +1210,8 @@ void status_speed_machine_readable (hashcat_ctx_t *hashcat_ctx)
 
     event_log_info (hashcat_ctx, "%d:%" PRIu64, device_id + 1, (u64) (device_info->hashes_msec_dev_benchmark * 1000));
   }
+
+  status_status_destroy (hashcat_ctx, hashcat_status);
 
   hcfree (hashcat_status);
 }
@@ -1247,6 +1257,8 @@ void status_speed (hashcat_ctx_t *hashcat_ctx)
       hashcat_status->speed_sec_all);
   }
 
+  status_status_destroy (hashcat_ctx, hashcat_status);
+
   hcfree (hashcat_status);
 }
 
@@ -1271,6 +1283,8 @@ void status_progress_machine_readable (hashcat_ctx_t *hashcat_ctx)
 
     event_log_info (hashcat_ctx, "%d:%d:%0.2f", device_id + 1, device_info->progress_dev, device_info->runtime_msec_dev);
   }
+
+  status_status_destroy (hashcat_ctx, hashcat_status);
 
   hcfree (hashcat_status);
 }
@@ -1318,6 +1332,8 @@ void status_progress (hashcat_ctx_t *hashcat_ctx)
       "Runtime.Dev.#%d...: %0.2fms", device_id + 1,
       device_info->runtime_msec_dev);
   }
+
+  status_status_destroy (hashcat_ctx, hashcat_status);
 
   hcfree (hashcat_status);
 }

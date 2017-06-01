@@ -286,6 +286,7 @@ typedef enum rule_functions
 
   RULE_OP_REJECT_LESS            = '<',
   RULE_OP_REJECT_GREATER         = '>',
+  RULE_OP_REJECT_EQUAL           = '_',
   RULE_OP_REJECT_CONTAIN         = '!',
   RULE_OP_REJECT_NOT_CONTAIN     = '/',
   RULE_OP_REJECT_EQUAL_FIRST     = '(',
@@ -1864,6 +1865,8 @@ typedef struct cache_generate
   u64 comp;
   u64 cnt;
   u64 cnt2;
+
+  time_t runtime;
 
 } cache_generate_t;
 

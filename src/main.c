@@ -717,6 +717,9 @@ static void main_monitor_status_refresh (MAYBE_UNUSED hashcat_ctx_t *hashcat_ctx
 {
   const user_options_t       *user_options       = hashcat_ctx->user_options;
   const user_options_extra_t *user_options_extra = hashcat_ctx->user_options_extra;
+  const status_ctx_t         *status_ctx         = hashcat_ctx->status_ctx;
+
+  if (status_ctx->accessible == false) return;
 
   if ((user_options_extra->wordlist_mode == WL_MODE_FILE) || (user_options_extra->wordlist_mode == WL_MODE_MASK))
   {
@@ -780,12 +783,35 @@ static void main_wordlist_cache_generate (MAYBE_UNUSED hashcat_ctx_t *hashcat_ct
   }
   else
   {
+    char *runtime = (char *) malloc (HCBUFSIZ_TINY);
+
+    #if defined (_WIN)
+    __time64_t runtime_sec = cache_generate->runtime;
+    #else
+    time_t runtime_sec = cache_generate->runtime;
+    #endif
+
+    struct tm *tmp;
+
+    #if defined (_WIN)
+    tmp = _gmtime64 (&runtime_sec);
+    #else
+    struct tm tm;
+
+    tmp = gmtime_r (&runtime_sec, &tm);
+    #endif
+
+    format_timer_display (tmp, runtime, HCBUFSIZ_TINY);
+
     event_log_info (hashcat_ctx, "Dictionary cache built:");
     event_log_info (hashcat_ctx, "* Filename..: %s", cache_generate->dictfile);
     event_log_info (hashcat_ctx, "* Passwords.: %" PRIu64, cache_generate->cnt2);
     event_log_info (hashcat_ctx, "* Bytes.....: %" PRId64, cache_generate->comp);
     event_log_info (hashcat_ctx, "* Keyspace..: %" PRIu64, cache_generate->cnt);
+    event_log_info (hashcat_ctx, "* Runtime...: %s", runtime);
     event_log_info (hashcat_ctx, NULL);
+
+    hcfree (runtime);
   }
 }
 
