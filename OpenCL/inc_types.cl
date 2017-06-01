@@ -776,7 +776,7 @@ typedef struct
 
 typedef struct
 {
-  u64 digest_buf[8];
+  u64 hash[8][16];
   u64 h[64];
   u64 t[2];
 
