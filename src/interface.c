@@ -18685,12 +18685,11 @@ int ascii_digest (hashcat_ctx_t *hashcat_ctx, char *out_buf, const size_t out_le
     }
     else if (hash_type == HASH_TYPE_SHA1)
     {
-      snprintf (out_buf, out_len - 1, "%08x%08x%08x%08x%08x",
+      snprintf (out_buf, out_len - 1, "%08x%08x%08x%08x",
         digest_buf[0],
         digest_buf[1],
         digest_buf[2],
-        digest_buf[3],
-        digest_buf[4]);
+        digest_buf[3]);
     }
     else if (hash_type == HASH_TYPE_SHA224)
     {
