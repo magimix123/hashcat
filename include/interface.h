@@ -449,12 +449,14 @@ typedef struct argon2
   u32 t;
   u32 p;
   u32 l;
+  u32 memory_blocks;
+  u32 segment_length;
 
 } argon2_t;
 
 typedef struct argon2_tmp
 {
-  u64 hash[8];
+  u64 block[128];  // 1024
 
 } argon2_tmp_t;
 
