@@ -776,9 +776,7 @@ typedef struct
 
 typedef struct
 {
-  u64 hash[8][16];
-  u64 h[64];
-  u64 t[2];
+  u64 blocks[8][256];
 
 } argon2_tmp_t;
 

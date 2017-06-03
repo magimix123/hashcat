@@ -18,6 +18,7 @@
 #include "cpu_sha256.h"
 #include "cpu_blake2.h"
 #include "interface.h"
+#include "cpu_argon2.h"
 #include "ext_lzma.h"
 
 static const char OPTI_STR_ZERO_BYTE[]         = "Zero-Byte";
@@ -5490,7 +5491,8 @@ Parallelism:	1
 Hash:		257aadd062c040e70deeaa10c1601d3e51cba1a014a88cca273cbc27313ff465
 Encoded:	$argon2d$v=19$m=4096,t=3,p=1$MTIzNDU2Nzg$JXqt0GLAQOcN7qoQwWAdPlHLoaAUqIzKJzy8JzE/9GU
 */
-#define ERROR_PTR (void *)1
+#define ERROR_SEPARATOR_UNMATCHED (void *)1
+#define ARGON2_SYNC_POINTS        4
 
   if ((input_len < DISPLAY_LEN_MIN_15500) || (input_len > DISPLAY_LEN_MAX_15500)) return (PARSER_GLOBAL_LENGTH);
 
@@ -5519,11 +5521,11 @@ Encoded:	$argon2d$v=19$m=4096,t=3,p=1$MTIzNDU2Nzg$JXqt0GLAQOcN7qoQwWAdPlHLoaAUqI
   if (argon2->v != 0x10 && argon2->v != 0x13) return (PARSER_SALT_VALUE);
 
   parameters_marker = (u8 *) strchr ((const char *) parameters_marker, '$') + 1;
-  if (parameters_marker == ERROR_PTR) return (PARSER_SEPARATOR_UNMATCHED);
+  if (parameters_marker == ERROR_SEPARATOR_UNMATCHED) return (PARSER_SEPARATOR_UNMATCHED);
 
   saved_marker = parameters_marker;
 
-  while (parameters_marker != ERROR_PTR)
+  while (parameters_marker != ERROR_SEPARATOR_UNMATCHED)
   {
     switch (parameters_marker[0])
     {
@@ -5543,15 +5545,31 @@ Encoded:	$argon2d$v=19$m=4096,t=3,p=1$MTIzNDU2Nzg$JXqt0GLAQOcN7qoQwWAdPlHLoaAUqI
   if (argon2->m < 1024  ||    \
      (argon2->m & 1023) != 0) return (PARSER_SALT_VALUE);
 
+  /*
+   * Allocate memory
+   */
+
+  argon2->memory_blocks = argon2->m;
+
+  if (argon2->memory_blocks < 2 * ARGON2_SYNC_POINTS * argon2->p)
+  {
+    argon2->memory_blocks = 2 * ARGON2_SYNC_POINTS * argon2->p;
+  }
+
+  argon2->segment_length = argon2->memory_blocks  / (argon2->p * ARGON2_SYNC_POINTS);
+  argon2->memory_blocks  = argon2->segment_length * (argon2->p * ARGON2_SYNC_POINTS);
+
+  
+
   /**
    * Parse Salt & Hash
    */
 
   u8 *salt_marker  = (u8 *) strchr ((const char *) saved_marker, '$') + 1;
-  if (salt_marker  == ERROR_PTR) return (PARSER_SEPARATOR_UNMATCHED);
+  if (salt_marker  == ERROR_SEPARATOR_UNMATCHED) return (PARSER_SEPARATOR_UNMATCHED);
 
   u8 *digest_marker  = (u8 *) strchr ((const char *) salt_marker, '$') + 1;
-  if (digest_marker  == ERROR_PTR) return (PARSER_SEPARATOR_UNMATCHED);
+  if (digest_marker  == ERROR_SEPARATOR_UNMATCHED) return (PARSER_SEPARATOR_UNMATCHED);
 
   u8 *salt_buf_ptr = (u8 *) salt->salt_buf;
 
@@ -5559,7 +5577,8 @@ Encoded:	$argon2d$v=19$m=4096,t=3,p=1$MTIzNDU2Nzg$JXqt0GLAQOcN7qoQwWAdPlHLoaAUqI
 
   if (salt_len < 8 || salt_len > 4096) return (PARSER_SALT_VALUE);
 
-  salt->salt_len = salt_len - 1;
+  salt->salt_len  = salt_len  - 1;
+  salt->salt_iter = argon2->t - 1;
 
   u8 tmp_buf[100] = { 0 };
 
@@ -5573,8 +5592,11 @@ Encoded:	$argon2d$v=19$m=4096,t=3,p=1$MTIzNDU2Nzg$JXqt0GLAQOcN7qoQwWAdPlHLoaAUqI
   digest[1] = ((const u64 *) tmp_buf)[1];
 
   return (PARSER_OK);
-#undef ERROR_PTR
+
+#undef ARGON2_SYNC_POINTS
+#undef ERROR_SEPARATOR_UNMATCHED
 }
+
 int chacha20_parse_hash (u8 *input_buf, u32 input_len, hash_t *hash_buf, MAYBE_UNUSED const hashconfig_t *hashconfig)
 {
   if ((input_len < DISPLAY_LEN_MIN_15400) || (input_len > DISPLAY_LEN_MAX_15400)) return (PARSER_GLOBAL_LENGTH);

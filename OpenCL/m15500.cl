@@ -17,8 +17,15 @@
 #define COMPARE_S "inc_comp_single.cl"
 #define COMPARE_M "inc_comp_multi.cl"
 
-#define BLAKE2B_FINAL   1
-#define BLAKE2B_UPDATE  0
+#define BLAKE2B_FINAL                 1
+#define BLAKE2B_UPDATE                0
+#define BLAKE2B_FANOUT       0x00010000
+#define BLAKE2B_DEPTH        0x01000000
+#define BLAKE2B_BLOCK_SIZE           64
+#define ARGON2_SYNC_POINTS            4 
+#define ARGON2_BLOCK_SIZE          1024
+#define ARGON2_PREHASH_SEED_LENGTH   72
+#define ARGON2_PREHASH_HASH_LENGTH   64
 
 #define BLAKE2B_G(r,i,a,b,c,d)                \
   do {                                        \
@@ -333,14 +340,14 @@ __kernel void m15500_init (__global pw_t *pws, __global const kernel_rule_t *rul
    * H (p, l, m, t, v, y, <P>, P, <S>, S, <K>, K, <X>, X)
    */
 
-  u64x m[16] = { 0 };
-  u64x v[16] = { 0 };
-  u64x h[ 8] = { 0 };
-  u64x f[ 2] = { 0 };
-  u64x t[ 2] = { 0 };
-
-  u8x   p[128] = { 0 };
-  u32x  index  =   0  ; 
+  u64x   m[ 16] = { 0 };
+  u64x   v[ 16] = { 0 };
+  u64x   h[  8] = { 0 };
+  u64x   f[  2] = { 0 };
+  u64x   t[  2] = { 0 };
+  u64x pre[  8] = { 0 };
+  u8x    p[128] = { 0 };
+  u32x   index  =   0  ; 
 
   p_push(argon2.p);                                     // p
   p_push(argon2.l);                                     // l
@@ -704,9 +711,9 @@ __kernel void m15500_init (__global pw_t *pws, __global const kernel_rule_t *rul
    */
 
   h[0]  = BLAKE2B_IV_00; 
-  h[0] ^= 0x00000040;      // outlen 
-  h[0] ^= 0x00010000;      // fanout
-  h[0] ^= 0x01000000;      // depth
+  h[0] ^= BLAKE2B_BLOCK_SIZE;
+  h[0] ^= BLAKE2B_FANOUT;
+  h[0] ^= BLAKE2B_DEPTH;
   h[1]  = BLAKE2B_IV_01;
   h[2]  = BLAKE2B_IV_02;
   h[3]  = BLAKE2B_IV_03;
@@ -718,47 +725,266 @@ __kernel void m15500_init (__global pw_t *pws, __global const kernel_rule_t *rul
   u64x size_in = hl32_to_64(0, pw_len) + salt.salt_len + 40;
 
   /*
-   * Blake2b Compress
+   * Blake2b transform to obtain the pre-computed hash
    */
 
   blake2b_transform(h, t, f, m, v, size_in, BLAKE2B_FINAL);
 
+  pre[0] = h[0];
+  pre[1] = h[1];
+  pre[2] = h[2];
+  pre[3] = h[3];
+  pre[4] = h[4];
+  pre[5] = h[5];
+  pre[6] = h[6];
+  pre[7] = h[7];
 
   /*
-   * Save hash vector to tmps buffer
+   * Compute two memory blocks per lane with pre-computed hash
    */
- 
-  #if VECT_SIZE == 1
-    for (u8 i = 0; i < 8; i++) tmps[gid].hash[i][ 0] = h[i];
-  #endif
 
-  #if VECT_SIZE >= 2
-    for (u8 i = 0; i < 8; i++) tmps[gid].hash[i][ 0] = h[i].s0;
-    for (u8 i = 0; i < 8; i++) tmps[gid].hash[i][ 1] = h[i].s1;
-  #endif
+  for (u32 lane = 0; lane < argon2.p; lane++)
+  {
+    h[0]  = BLAKE2B_IV_00;
+    h[0] ^= BLAKE2B_BLOCK_SIZE;
+    h[0] ^= BLAKE2B_FANOUT;
+    h[0] ^= BLAKE2B_DEPTH;
+    h[1]  = BLAKE2B_IV_01;
+    h[2]  = BLAKE2B_IV_02;
+    h[3]  = BLAKE2B_IV_03;
+    h[4]  = BLAKE2B_IV_04;
+    h[5]  = BLAKE2B_IV_05;
+    h[6]  = BLAKE2B_IV_06;
+    h[7]  = BLAKE2B_IV_07;  
 
-  #if VECT_SIZE >= 4
-    for (u8 i = 0; i < 8; i++) tmps[gid].hash[i][ 2] = h[i].s2;
-    for (u8 i = 0; i < 8; i++) tmps[gid].hash[i][ 3] = h[i].s3;
-  #endif
+    f[0] = 0;
+    f[1] = 0;
+    t[0] = 0;
+    t[1] = 0;
 
-  #if VECT_SIZE >= 8
-    for (u8 i = 0; i < 8; i++) tmps[gid].hash[i][ 4] = h[i].s4;
-    for (u8 i = 0; i < 8; i++) tmps[gid].hash[i][ 5] = h[i].s5;
-    for (u8 i = 0; i < 8; i++) tmps[gid].hash[i][ 6] = h[i].s6;
-    for (u8 i = 0; i < 8; i++) tmps[gid].hash[i][ 7] = h[i].s7; 
-  #endif
+    m[0] = hl32_to_64(l32_from_64(pre[0]), ARGON2_BLOCK_SIZE);
+    m[1] = hl32_to_64(l32_from_64(pre[1]), h32_from_64(pre[0]));
+    m[2] = hl32_to_64(l32_from_64(pre[2]), h32_from_64(pre[1]));
+    m[3] = hl32_to_64(l32_from_64(pre[3]), h32_from_64(pre[2]));
+    m[4] = hl32_to_64(l32_from_64(pre[4]), h32_from_64(pre[3]));
+    m[5] = hl32_to_64(l32_from_64(pre[5]), h32_from_64(pre[4]));
+    m[6] = hl32_to_64(l32_from_64(pre[6]), h32_from_64(pre[5]));
+    m[7] = hl32_to_64(l32_from_64(pre[7]), h32_from_64(pre[6]));
+    m[8] = hl32_to_64(                  0, h32_from_64(pre[7]));
+    m[9] = hl32_to_64(                  0, swap32(lane));
 
-  #if VECT_SIZE >= 16
-    for (u8 i = 0; i < 8; i++) tmps[gid].hash[i][ 8] = h[i].s8;
-    for (u8 i = 0; i < 8; i++) tmps[gid].hash[i][ 9] = h[i].s9;
-    for (u8 i = 0; i < 8; i++) tmps[gid].hash[i][10] = h[i].sa;
-    for (u8 i = 0; i < 8; i++) tmps[gid].hash[i][11] = h[i].sb;
-    for (u8 i = 0; i < 8; i++) tmps[gid].hash[i][12] = h[i].sc;
-    for (u8 i = 0; i < 8; i++) tmps[gid].hash[i][13] = h[i].sd;
-    for (u8 i = 0; i < 8; i++) tmps[gid].hash[i][14] = h[i].se;
-    for (u8 i = 0; i < 8; i++) tmps[gid].hash[i][15] = h[i].sf;
-  #endif
+    blake2b_transform(h, t, f, m, v, ARGON2_PREHASH_SEED_LENGTH + 4, BLAKE2B_FINAL);
+    
+    tmps[gid].blocks[lane][0] = h[0];
+    tmps[gid].blocks[lane][1] = h[1];
+    tmps[gid].blocks[lane][2] = h[2];
+    tmps[gid].blocks[lane][3] = h[3];
+
+    m[8] = 0;
+    m[9] = 0;
+
+    for (u32 i = 1; i < 30; i++)
+    {
+      m[0] = h[0];
+      m[1] = h[1];
+      m[2] = h[2];
+      m[3] = h[3];
+      m[4] = h[4];
+      m[5] = h[5];
+      m[6] = h[6];
+      m[7] = h[7];
+
+      h[0]  = BLAKE2B_IV_00;
+      h[0] ^= BLAKE2B_BLOCK_SIZE;
+      h[0] ^= BLAKE2B_FANOUT;
+      h[0] ^= BLAKE2B_DEPTH;
+      h[1]  = BLAKE2B_IV_01;
+      h[2]  = BLAKE2B_IV_02;
+      h[3]  = BLAKE2B_IV_03;
+      h[4]  = BLAKE2B_IV_04;
+      h[5]  = BLAKE2B_IV_05;
+      h[6]  = BLAKE2B_IV_06;
+      h[7]  = BLAKE2B_IV_07;
+
+      t[0] = 0;
+      t[1] = 0;
+      f[0] = 0;
+      f[1] = 0;
+
+      blake2b_transform(h, t, f, m, v, BLAKE2B_BLOCK_SIZE, BLAKE2B_FINAL);
+
+      tmps[gid].blocks[lane][i * 4 + 0] = h[0];
+      tmps[gid].blocks[lane][i * 4 + 1] = h[1];
+      tmps[gid].blocks[lane][i * 4 + 2] = h[2];
+      tmps[gid].blocks[lane][i * 4 + 3] = h[3];
+    }
+
+    m[0] = h[0];
+    m[1] = h[1];
+    m[2] = h[2];
+    m[3] = h[3];
+    m[4] = h[4];
+    m[5] = h[5];
+    m[6] = h[6];
+    m[7] = h[7];
+
+    h[0]  = BLAKE2B_IV_00;
+    h[0] ^= BLAKE2B_BLOCK_SIZE;
+    h[0] ^= BLAKE2B_FANOUT;
+    h[0] ^= BLAKE2B_DEPTH;
+    h[1]  = BLAKE2B_IV_01;
+    h[2]  = BLAKE2B_IV_02;
+    h[3]  = BLAKE2B_IV_03;
+    h[4]  = BLAKE2B_IV_04;
+    h[5]  = BLAKE2B_IV_05;
+    h[6]  = BLAKE2B_IV_06;
+    h[7]  = BLAKE2B_IV_07;
+
+    t[0] = 0;
+    t[1] = 0;
+    f[0] = 0;
+    f[1] = 0;
+
+    blake2b_transform(h, t, f, m, v, BLAKE2B_BLOCK_SIZE, BLAKE2B_FINAL);
+
+    tmps[gid].blocks[lane][120] = h[0];
+    tmps[gid].blocks[lane][121] = h[1];
+    tmps[gid].blocks[lane][122] = h[2];
+    tmps[gid].blocks[lane][123] = h[3];
+    tmps[gid].blocks[lane][124] = h[4];
+    tmps[gid].blocks[lane][125] = h[5];
+    tmps[gid].blocks[lane][126] = h[6];
+    tmps[gid].blocks[lane][127] = h[7];
+
+    h[0]  = BLAKE2B_IV_00;
+    h[0] ^= BLAKE2B_BLOCK_SIZE;
+    h[0] ^= BLAKE2B_FANOUT;
+    h[0] ^= BLAKE2B_DEPTH;
+    h[1]  = BLAKE2B_IV_01;
+    h[2]  = BLAKE2B_IV_02;
+    h[3]  = BLAKE2B_IV_03;
+    h[4]  = BLAKE2B_IV_04;
+    h[5]  = BLAKE2B_IV_05;
+    h[6]  = BLAKE2B_IV_06;
+    h[7]  = BLAKE2B_IV_07;
+
+    f[0] = 0;
+    f[1] = 0;
+    t[0] = 0;
+    t[1] = 0;
+
+    m[0] = hl32_to_64(l32_from_64(pre[0]), ARGON2_BLOCK_SIZE);
+    m[1] = hl32_to_64(l32_from_64(pre[1]), h32_from_64(pre[0]));
+    m[2] = hl32_to_64(l32_from_64(pre[2]), h32_from_64(pre[1]));
+    m[3] = hl32_to_64(l32_from_64(pre[3]), h32_from_64(pre[2]));
+    m[4] = hl32_to_64(l32_from_64(pre[4]), h32_from_64(pre[3]));
+    m[5] = hl32_to_64(l32_from_64(pre[5]), h32_from_64(pre[4]));
+    m[6] = hl32_to_64(l32_from_64(pre[6]), h32_from_64(pre[5]));
+    m[7] = hl32_to_64(l32_from_64(pre[7]), h32_from_64(pre[6]));
+    m[8] = hl32_to_64(                  1, h32_from_64(pre[7]));
+    m[9] = hl32_to_64(                  0, swap32(lane));
+
+    blake2b_transform(h, t, f, m, v, ARGON2_PREHASH_SEED_LENGTH + 4, BLAKE2B_FINAL);
+
+    tmps[gid].blocks[lane][128] = h[0];
+    tmps[gid].blocks[lane][129] = h[1];
+    tmps[gid].blocks[lane][130] = h[2];
+    tmps[gid].blocks[lane][131] = h[3];
+
+    m[8] = 0;
+    m[9] = 0;
+
+    for (u32 i = 1; i < 30; i++)
+    {
+      m[0] = h[0];
+      m[1] = h[1];
+      m[2] = h[2];
+      m[3] = h[3];
+      m[4] = h[4];
+      m[5] = h[5];
+      m[6] = h[6];
+      m[7] = h[7];
+
+      h[0]  = BLAKE2B_IV_00;
+      h[0] ^= BLAKE2B_BLOCK_SIZE;
+      h[0] ^= BLAKE2B_FANOUT;
+      h[0] ^= BLAKE2B_DEPTH;
+      h[1]  = BLAKE2B_IV_01;
+      h[2]  = BLAKE2B_IV_02;
+      h[3]  = BLAKE2B_IV_03;
+      h[4]  = BLAKE2B_IV_04;
+      h[5]  = BLAKE2B_IV_05;
+      h[6]  = BLAKE2B_IV_06;
+      h[7]  = BLAKE2B_IV_07;
+
+      t[0] = 0;
+      t[1] = 0;
+      f[0] = 0;
+      f[1] = 0;
+
+      blake2b_transform(h, t, f, m, v, BLAKE2B_BLOCK_SIZE, BLAKE2B_FINAL);
+
+      tmps[gid].blocks[lane][i * 4 + 128] = h[0];
+      tmps[gid].blocks[lane][i * 4 + 129] = h[1];
+      tmps[gid].blocks[lane][i * 4 + 130] = h[2];
+      tmps[gid].blocks[lane][i * 4 + 131] = h[3];
+    }
+
+    m[0] = h[0];
+    m[1] = h[1];
+    m[2] = h[2];
+    m[3] = h[3];
+    m[4] = h[4];
+    m[5] = h[5];
+    m[6] = h[6];
+    m[7] = h[7];
+
+    h[0]  = BLAKE2B_IV_00;
+    h[0] ^= BLAKE2B_BLOCK_SIZE;
+    h[0] ^= BLAKE2B_FANOUT;
+    h[0] ^= BLAKE2B_DEPTH;
+    h[1]  = BLAKE2B_IV_01;
+    h[2]  = BLAKE2B_IV_02;
+    h[3]  = BLAKE2B_IV_03;
+    h[4]  = BLAKE2B_IV_04;
+    h[5]  = BLAKE2B_IV_05;
+    h[6]  = BLAKE2B_IV_06;
+    h[7]  = BLAKE2B_IV_07;
+
+    t[0] = 0;
+    t[1] = 0;
+    f[0] = 0;
+    f[1] = 0;
+
+    blake2b_transform(h, t, f, m, v, BLAKE2B_BLOCK_SIZE, BLAKE2B_FINAL);
+
+    tmps[gid].blocks[lane][248] = h[0];
+    tmps[gid].blocks[lane][249] = h[1];
+    tmps[gid].blocks[lane][250] = h[2];
+    tmps[gid].blocks[lane][251] = h[3];
+    tmps[gid].blocks[lane][252] = h[4];
+    tmps[gid].blocks[lane][253] = h[5];
+    tmps[gid].blocks[lane][254] = h[6];
+    tmps[gid].blocks[lane][255] = h[7];
+  }
+
+  
+  u64 tmp[1][256];
+
+  for (u32 i = 0; i < 256; i++) tmp[0][i] = tmps[gid].blocks[0][i];
+
+  for (u32 i = 0; i < 1; i++)
+  {
+    printf("\n");
+    for (u32 j = 0; j < 1024; j++)
+    { 
+      printf("%02x", ((const u8 *)tmp[i])[j]); 
+    }
+
+  }
+
+  printf("\n\n");
+  printf("last 32... %08x%08x%08x%08x\n", ((const u32 *)&tmp[0][248])[0], ((const u32 *)&tmp[0][248])[1], ((const u32 *)&tmp[0][248])[2], ((const u32 *)&tmp[0][248])[3] );
 }
 
 __kernel void m15500_loop (__global pw_t *pws, __global const kernel_rule_t *rules_buf, __global const comb_t *combs_buf, __global const bf_t *bfs_buf, __global argon2_tmp_t *tmps, __global void *hooks, __global const u32 *bitmaps_buf_s1_a, __global const u32 *bitmaps_buf_s1_b, __global const u32 *bitmaps_buf_s1_c, __global const u32 *bitmaps_buf_s1_d, __global const u32 *bitmaps_buf_s2_a, __global const u32 *bitmaps_buf_s2_b, __global const u32 *bitmaps_buf_s2_c, __global const u32 *bitmaps_buf_s2_d, __global plain_t *plains_buf, __global const digest_t *digests_buf, __global u32 *hashes_shown, __global const salt_t *salt_bufs, __global argon2_t *esalt_bufs, __global u32 *d_return_buf, __global u32 *d_scryptV0_buf, __global u32 *d_scryptV1_buf, __global u32 *d_scryptV2_buf, __global u32 *d_scryptV3_buf, const u32 bitmap_mask, const u32 bitmap_shift1, const u32 bitmap_shift2, const u32 salt_pos, const u32 loop_pos, const u32 loop_cnt, const u32 rules_cnt, const u32 digests_cnt, const u32 digests_offset, const u32 combs_mode, const u32 gid_max)
@@ -775,6 +1001,7 @@ __kernel void m15500_loop (__global pw_t *pws, __global const kernel_rule_t *rul
   /**
    * iter1
    */
+
 
 
   /**
