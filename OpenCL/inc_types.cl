@@ -788,6 +788,13 @@ typedef struct chacha20
 
 } chacha20_t;
 
+typedef struct grain128a
+{
+  u32 iv[3];
+  u32 plain[2];
+
+} grain128a_t;
+
 typedef struct
 {
   int V;

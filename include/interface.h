@@ -1228,6 +1228,8 @@ typedef enum display_len
   DISPLAY_LEN_MAX_15300 =  1 + 7 + 1 + 1 + 1 + 1 + 1 + 100 + 1 + 6 + 1 + 6 + 1 + 10 + 1 + 32 + 1 + 4 + 1 + 512,
   DISPLAY_LEN_MIN_15400 = 10 + 1 + 16 + 1 + 1 + 1 + 16 + 1 + 16 + 1 + 16,
   DISPLAY_LEN_MAX_15400 = 10 + 1 + 16 + 1 + 2 + 1 + 16 + 1 + 16 + 1 + 16,
+  DISPLAY_LEN_MIN_15600 = 11 + 1 + 24 + 1 + 16 + 1 + 16,
+  DISPLAY_LEN_MAX_15600 = 11 + 1 + 24 + 1 + 16 + 1 + 16,
   DISPLAY_LEN_MIN_99999 = 1,
   DISPLAY_LEN_MAX_99999 = 55,
 
@@ -1369,6 +1371,7 @@ typedef enum hash_type
   HASH_TYPE_BLAKE2B             = 59,
   HASH_TYPE_CHACHA20            = 60,
   HASH_TYPE_DPAPIMK             = 61,
+  HASH_TYPE_GRAIN128A           = 62,
 
 } hash_type_t;
 
@@ -1560,6 +1563,7 @@ typedef enum kern_type
   KERN_TYPE_NETBSD_SHA1CRYPT        = 15100,
   KERN_TYPE_DPAPIMK                 = 15300,
   KERN_TYPE_CHACHA20                = 15400,
+  KERN_TYPE_GRAIN128A               = 15600,
   KERN_TYPE_PLAINTEXT               = 99999,
 
 } kern_type_t;
@@ -1811,6 +1815,7 @@ int filezilla_server_parse_hash   (u8 *input_buf, u32 input_len, hash_t *hash_bu
 int netbsd_sha1crypt_parse_hash   (u8 *input_buf, u32 input_len, hash_t *hash_buf, MAYBE_UNUSED const hashconfig_t *hashconfig);
 int atlassian_parse_hash          (u8 *input_buf, u32 input_len, hash_t *hash_buf, MAYBE_UNUSED const hashconfig_t *hashconfig);
 int dpapimk_parse_hash            (u8 *input_buf, u32 input_len, hash_t *hash_buf, MAYBE_UNUSED const hashconfig_t *hashconfig);
+int grain128a_parse_hash          (u8 *input_buf, u32 input_len, hash_t *hash_buf, MAYBE_UNUSED const hashconfig_t *hashconfig);
 
 /**
  * hook functions

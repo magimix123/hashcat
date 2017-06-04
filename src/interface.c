@@ -242,6 +242,7 @@ static const char HT_15100[] = "Juniper/NetBSD sha1crypt";
 static const char HT_15200[] = "Blockchain, My Wallet, V2";
 static const char HT_15300[] = "DPAPI masterkey file v1 and v2";
 static const char HT_15400[] = "Chacha20";
+static const char HT_15600[] = "Grain128a";
 
 static const char HT_99999[] = "Plaintext";
 
@@ -384,6 +385,7 @@ static const char SIGNATURE_ATLASSIAN[]        = "{PKCS5S2}";
 static const char SIGNATURE_NETBSD_SHA1CRYPT[] = "$sha1$";
 static const char SIGNATURE_BLAKE2B[]          = "$BLAKE2$";
 static const char SIGNATURE_CHACHA20[]         = "$Chacha20$";
+static const char SIGNATURE_GRAIN128A[]        = "$Grain128a$";
 
 /**
  * decoder / encoder
@@ -5541,6 +5543,55 @@ int chacha20_parse_hash (u8 *input_buf, u32 input_len, hash_t *hash_buf, MAYBE_U
   return (PARSER_OK);
 }
 
+int grain128a_parse_hash (u8 *input_buf, u32 input_len, hash_t *hash_buf, MAYBE_UNUSED const hashconfig_t *hashconfig)
+{
+#define INVALID_SEPARATOR_POINTER (void*)1
+
+  if ((input_len < DISPLAY_LEN_MIN_15600) || (input_len > DISPLAY_LEN_MAX_15600)) return (PARSER_GLOBAL_LENGTH);
+
+  if (memcmp (SIGNATURE_GRAIN128A, input_buf, 11)) return (PARSER_SIGNATURE_UNMATCHED);
+
+  u32 *digest = (u32 *) hash_buf->digest;
+
+  salt_t *salt = (salt_t *) hash_buf->salt;
+
+  grain128a_t *grain128a = (grain128a_t *) hash_buf->esalt;
+
+  u8 *iv_marker = (u8 *) strchr ((const char *) input_buf, '*') + 1;
+  if (iv_marker == INVALID_SEPARATOR_POINTER) return (PARSER_SEPARATOR_UNMATCHED);
+  if (is_valid_hex_string (iv_marker, 24) == false) return (PARSER_SALT_ENCODING);
+
+  /* Store 96 bit IV */
+  grain128a->iv[0] = hex_to_u32 ((const u8 *) iv_marker +  0);
+  grain128a->iv[1] = hex_to_u32 ((const u8 *) iv_marker +  8);
+  grain128a->iv[2] = hex_to_u32 ((const u8 *) iv_marker + 16);
+
+  u8 *plaintext_marker = (u8 *) strchr ((const char *) iv_marker, '*') + 1;
+  if (plaintext_marker == INVALID_SEPARATOR_POINTER) return (PARSER_SEPARATOR_UNMATCHED);
+  if (is_valid_hex_string (plaintext_marker, 16) == false) return (PARSER_SALT_ENCODING);
+
+  /* Store plaintext */
+  grain128a->plain[0] = hex_to_u32 ((const u8 *) plaintext_marker + 0);
+  grain128a->plain[1] = hex_to_u32 ((const u8 *) plaintext_marker + 8);
+
+  u8 *ciphertext_marker = (u8 *) strchr ((const char *) plaintext_marker, '*') + 1;
+  if (ciphertext_marker == INVALID_SEPARATOR_POINTER) return (PARSER_SEPARATOR_UNMATCHED);
+  if (is_valid_hex_string (ciphertext_marker, 16) == false) return (PARSER_SALT_ENCODING);
+
+  /* some fake salt for the sorting mechanisms */
+  salt->salt_buf[0] = grain128a->iv[0];
+  salt->salt_buf[1] = grain128a->iv[1];
+  salt->salt_buf[2] = grain128a->iv[2];
+  salt->salt_buf[3] = grain128a->plain[0];
+  salt->salt_buf[4] = grain128a->plain[1];
+
+  /* Store cipher for search mechanism */
+  digest[0] = hex_to_u32 ((const u8 *) ciphertext_marker + 0);
+  digest[1] = hex_to_u32 ((const u8 *) ciphertext_marker + 8);
+
+  return (PARSER_OK);
+#undef INVALID_SEPARATOR_POINTER
+}
 
 int ikepsk_md5_parse_hash (u8 *input_buf, u32 input_len, hash_t *hash_buf, MAYBE_UNUSED const hashconfig_t *hashconfig)
 {
@@ -18628,6 +18679,24 @@ int ascii_digest (hashcat_ctx_t *hashcat_ctx, char *out_buf, const size_t out_le
         ptr[1],
         ptr[0]);
     }
+    else if (hash_type == HASH_TYPE_GRAIN128A)
+    {
+      u32 *ptr = digest_buf;
+
+      const grain128a_t *grain128a_tmp = (const grain128a_t *) esalts_buf;
+      const grain128a_t *grain128a     = &grain128a_tmp[digest_cur];
+
+      snprintf (out_buf, out_len - 1, "%s*%08x%08x%08x*%08x%08x*%08x%08x",
+        SIGNATURE_GRAIN128A,
+        byte_swap_32(grain128a->iv[0]),
+        byte_swap_32(grain128a->iv[1]),
+        byte_swap_32(grain128a->iv[2]),
+        byte_swap_32(grain128a->plain[0]),
+        byte_swap_32(grain128a->plain[1]),
+        ptr[1],
+        ptr[0]);
+    }
+
     else if (hash_type == HASH_TYPE_RIPEMD160)
     {
       snprintf (out_buf, out_len - 1, "%08x%08x%08x%08x%08x",
@@ -22795,6 +22864,22 @@ int hashconfig_init (hashcat_ctx_t *hashcat_ctx)
                  hashconfig->dgst_pos3      = 3;
                  break;
 
+    case 15600:  hashconfig->hash_type      = HASH_TYPE_GRAIN128A;
+                 hashconfig->salt_type      = SALT_TYPE_EMBEDDED;
+                 hashconfig->attack_exec    = ATTACK_EXEC_INSIDE_KERNEL;
+                 hashconfig->opts_type      = OPTS_TYPE_PT_GENERATE_LE;
+                 hashconfig->kern_type      = KERN_TYPE_GRAIN128A;
+                 hashconfig->dgst_size      = DGST_SIZE_4_4;
+                 hashconfig->parse_func     = grain128a_parse_hash;
+                 hashconfig->opti_type      = OPTI_TYPE_ZERO_BYTE
+                                            | OPTI_TYPE_USES_BITS_32
+                                            | OPTI_TYPE_RAW_HASH;
+                 hashconfig->dgst_pos0      = 0;
+                 hashconfig->dgst_pos1      = 1;
+                 hashconfig->dgst_pos2      = 2;
+                 hashconfig->dgst_pos3      = 3;
+                 break;
+
     case 99999:  hashconfig->hash_type      = HASH_TYPE_PLAINTEXT;
                  hashconfig->salt_type      = SALT_TYPE_NONE;
                  hashconfig->attack_exec    = ATTACK_EXEC_INSIDE_KERNEL;
@@ -22933,6 +23018,7 @@ int hashconfig_init (hashcat_ctx_t *hashcat_ctx)
     case 14800: hashconfig->esalt_size = sizeof (itunes_backup_t);  break;
     case 15300: hashconfig->esalt_size = sizeof (dpapimk_t);        break;
     case 15400: hashconfig->esalt_size = sizeof (chacha20_t);       break;
+    case 15600: hashconfig->esalt_size = sizeof (grain128a_t);      break;
   }
 
   // hook_salt_size
@@ -23144,6 +23230,8 @@ int hashconfig_init (hashcat_ctx_t *hashcat_ctx)
     case 14900: hashconfig->pw_max = 10;
                 break;
     case 15400: hashconfig->pw_max = 32;
+                break;
+    case 15600: hashconfig->pw_max = 16;
                 break;
   }
 

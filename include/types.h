@@ -688,6 +688,13 @@ typedef struct
 
 typedef struct
 {
+  u32 iv[3];
+  u32 plain[2];
+
+} grain128a_t;
+
+typedef struct
+{
   u32 salt_buf[16];
   u32 salt_buf_pc[16];
 
