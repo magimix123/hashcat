@@ -14,117 +14,119 @@
 #include "inc_rp.cl"
 #include "inc_simd.cl"
 
-#define GRAIN128A_IVSIZE    96
-#define GRAIN128A_KEYSIZE  128
+#define GRAIN128A_IVSIZE            96
+#define GRAIN128A_KEYSIZE          128
+#define GRAIN128A_LFSR_PAD  0xfffffffe
 
-void grain_keystream(u8x LFSR[128], u8x NFSR[128], u8x outbit)
-{
-  u8x NBit, LBit;
+#define update_keystream()                                                              \
+  do                                                                                    \
+  {                                                                                     \
+    outbit = ((NFSR[0]  >>  2) & 1)                                                     \
+           ^ ((NFSR[0]  >> 15) & 1)                                                     \
+           ^ ((NFSR[1]  >>  4) & 1)                                                     \
+           ^ ((NFSR[1]  >> 13) & 1)                                                     \
+           ^ ((NFSR[2]  >>  0) & 1)                                                     \
+           ^ ((NFSR[2]  >>  9) & 1)                                                     \
+           ^ ((NFSR[2]  >> 25) & 1)                                                     \
+           ^ ((LFSR[2]  >> 29) & 1)                                                     \
+           ^ (((NFSR[0] >> 12) & 1) & ((LFSR[0] >>  8) & 1))                            \
+           ^ (((LFSR[0] >> 13) & 1) & ((LFSR[0] >> 20) & 1))                            \
+           ^ (((NFSR[2] >> 31) & 1) & ((LFSR[1] >> 10) & 1))                            \
+           ^ (((LFSR[1] >> 28) & 1) & ((LFSR[2] >> 15) & 1))                            \
+           ^ (((NFSR[0] >> 12) & 1) & ((NFSR[2] >> 31) & 1) & ((LFSR[2] >> 30) & 1));   \
+                                                                                        \
+    NBit   = ((LFSR[0] >>  0) & 1)                                                                              \
+           ^ ((NFSR[0] >>  0) & 1)                                                                              \
+           ^ ((NFSR[0] >> 26) & 1)                                                                              \
+           ^ ((NFSR[1] >> 24) & 1)                                                                              \
+           ^ ((NFSR[2] >> 27) & 1)                                                                              \
+           ^ ((NFSR[3] >>  0) & 1)                                                                              \
+           ^ (((NFSR[0] >>  3) & 1) & ((NFSR[2] >>  3) & 1))                                                    \
+           ^ (((NFSR[0] >> 11) & 1) & ((NFSR[0] >> 13) & 1))                                                    \
+           ^ (((NFSR[0] >> 17) & 1) & ((NFSR[0] >> 18) & 1))                                                    \
+           ^ (((NFSR[0] >> 27) & 1) & ((NFSR[1] >> 27) & 1))                                                    \
+           ^ (((NFSR[1] >>  8) & 1) & ((NFSR[1] >> 16) & 1))                                                    \
+           ^ (((NFSR[1] >> 29) & 1) & ((NFSR[2] >>  1) & 1))                                                    \
+           ^ (((NFSR[2] >>  4) & 1) & ((NFSR[2] >> 20) & 1))                                                    \
+           ^ (((NFSR[2] >> 24) & 1) & ((NFSR[2] >> 28) & 1) & ((NFSR[2] >> 29) & 1) & ((NFSR[2] >> 31) & 1))    \
+           ^ (((NFSR[0] >> 22) & 1) & ((NFSR[0] >> 24) & 1) & ((NFSR[0] >> 25) & 1))                            \
+           ^ (((NFSR[2] >>  6) & 1) & ((NFSR[2] >> 14) & 1) & ((NFSR[2] >> 18) & 1));                           \
+                                                                                                                \
+    LBit   = ((LFSR[0] >>  0) & 1)                      \
+           ^ ((LFSR[0] >>  7) & 1)                      \
+           ^ ((LFSR[1] >>  6) & 1)                      \
+           ^ ((LFSR[2] >>  6) & 1)                      \
+           ^ ((LFSR[2] >> 17) & 1)                      \
+           ^ ((LFSR[3] >>  0) & 1);                     \
+                                                        \
+    NFSR[0] >>= 1;                                      \
+    NFSR[0]  ^= ((NFSR[1] << 31) & 0x80000000);         \
+    NFSR[1] >>= 1;                                      \
+    NFSR[1]  ^= ((NFSR[2] << 31) & 0x80000000);         \
+    NFSR[2] >>= 1;                                      \
+    NFSR[2]  ^= ((NFSR[3] << 31) & 0x80000000);         \
+    NFSR[3] >>= 1;                                      \
+    NFSR[3]  ^= ((NBit    << 31) & 0x80000000);         \
+    LFSR[0] >>= 1;                                      \
+    LFSR[0]  ^= ((LFSR[1] << 31) & 0x80000000);         \
+    LFSR[1] >>= 1;                                      \
+    LFSR[1]  ^= ((LFSR[2] << 31) & 0x80000000);         \
+    LFSR[2] >>= 1;                                      \
+    LFSR[2]  ^= ((LFSR[3] << 31) & 0x80000000);         \
+    LFSR[3] >>= 1;                                      \
+    LFSR[3]  ^= ((LBit    << 31) & 0x80000000);         \
+                                                        \
+  } while (0)
 
-  /* Calculate feedback and output bits */
-
-  outbit = NFSR[2]                                     \
-         ^ NFSR[15]                                    \
-         ^ NFSR[36]                                    \
-         ^ NFSR[45]                                    \
-         ^ NFSR[64]                                    \
-         ^ NFSR[73]                                    \
-         ^ NFSR[89]                                    \
-         ^ LFSR[93]                                    \
-         ^ (NFSR[12] & LFSR[ 8])                       \
-         ^ (LFSR[13] & LFSR[20])                       \
-         ^ (NFSR[95] & LFSR[42])                       \
-         ^ (LFSR[60] & LFSR[79])                       \
-         ^ (NFSR[12] & NFSR[95] & LFSR[94]);    
-
-  NBit   = LFSR[0]                                            \
-         ^ NFSR[0]                                            \
-         ^ NFSR[26]                                           \
-         ^ NFSR[56]                                           \
-         ^ NFSR[91]                                           \
-         ^ NFSR[96]                                           \
-         ^ (NFSR[3]  & NFSR[67])                              \
-         ^ (NFSR[11] & NFSR[13])                              \
-         ^ (NFSR[17] & NFSR[18])                              \
-         ^ (NFSR[27] & NFSR[59])                              \
-         ^ (NFSR[40] & NFSR[48])                              \
-         ^ (NFSR[61] & NFSR[65])                              \
-         ^ (NFSR[68] & NFSR[84])                              \
-         ^ (NFSR[88] & NFSR[92] & NFSR[93] & NFSR[95])        \
-         ^ (NFSR[22] & NFSR[24] & NFSR[25])                   \
-         ^ (NFSR[70] & NFSR[78] & NFSR[82]);
-
-  LBit   = LFSR[ 0]                         \
-         ^ LFSR[ 7]                         \
-         ^ LFSR[38]                         \
-         ^ LFSR[70]                         \
-         ^ LFSR[81]                         \
-         ^ LFSR[96];
-
-  /* Update registers */
-
-  for (u8 i = 1; i < GRAIN128A_KEYSIZE; i++) 
-  {
-    NFSR[i - 1] = NFSR[i];
-    LFSR[i - 1] = LFSR[i];
-  }
-
-  NFSR[GRAIN128A_KEYSIZE - 1] = NBit;
-  LFSR[GRAIN128A_KEYSIZE - 1] = LBit;
-}
-
-void grain128a_transform (const u32x key[4], const u32 iv[3], const u32 plain[2], const u32x digest[8])
+void grain128a_transform (const u32x key[4], const u32 iv[3], const u32 plain[2], u64x out)
 {
   /**
-  * Initialize registers
-  */
+   * Initialize registers
+   */
+ 
+  u8x  outbit  = 0;
 
-  u8x outbit;
-  u8x LFSR[128];
-  u8x NFSR[128];
+  u32x LFSR[4];
+  u32x NFSR[4];
+  u32x LBit;
+  u32x NBit;
 
-  for (u8 i = 0; i< GRAIN128A_IVSIZE / 8; i++) 
-  {
-    for (u8 j = 0; j < 8; j++) 
-    {
-      NFSR[i * 8 + j] = ((key[i] >> j) & 1 );
-      LFSR[i * 8 + j] = ((iv[i]  >> j) & 1 );
-    }
-  }
+  LFSR[0] = iv[0];
+  LFSR[1] = iv[1];
+  LFSR[2] = iv[2];
+  LFSR[3] = GRAIN128A_LFSR_PAD;  
 
-  for (u8 i = GRAIN128A_IVSIZE / 8; i < GRAIN128A_KEYSIZE / 8; i++) 
-  {
-    for (u8 j = 0; j < 8; j++) 
-    {
-      NFSR[i * 8 + j] = ((key[i] >> j ) & 1);
-      LFSR[i * 8 + j] = 1;
-    }
-  }
+  NFSR[0] = key[0];
+  NFSR[1] = key[1];
+  NFSR[2] = key[2];
+  NFSR[3] = key[3];
 
-  LFSR[127] = 0; // padding req
 
   /* do initial clockings */
 
-  for (u8 i = 0; i < 256; i++) 
+  for (u8 i = 0; i < 256; i++)
   {
-    grain_keystream(LFSR, NFSR, outbit);
+    update_keystream();
 
-    LFSR[127] ^= outbit;
-    NFSR[127] ^= outbit;             
+    LFSR[3] ^= ((outbit << 31) & 0x80000000);
+    NFSR[3] ^= ((outbit << 31) & 0x80000000);
   }
 
   u8 k = 0;
 
-  for (u8 i = 0; i < 8; i++) 
+  // printf("\n");
+  for (u8 i = 0; i < 8; i++)
   {
+
     k = 0;
-    for (u8 j = 0; j < 8; j++) 
+    for (u8 j = 0; j < 8; j++)
     {
-      grain_keystream(LFSR, NFSR, outbit);
+      update_keystream();
       k |= outbit << j;
     }
 
-    //digest[i] = plain[i] ^ k;
+    out <<= 8;
+    out  ^= k;
   }
 }
 
@@ -264,8 +266,11 @@ __kernel void m15600_s04 (__global pw_t *pws, __global const kernel_rule_t *rule
     const u32x out_len = apply_rules_vect(pw_buf0, pw_buf1, pw_len, rules_buf, il_pos, w0, w1);
 
     u32x digest[4] = { 0 };
+    u64x out = 0;
 
-//    grain128a_transform (w0, iv, plain, digest);
+    grain128a_transform (w0, iv, plain, out);
+
+    printf("out: %llu\n", out);
 
     const u32x r0 = digest[0];
     const u32x r1 = digest[1];
