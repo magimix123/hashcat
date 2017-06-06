@@ -78,13 +78,13 @@
                                                         \
   } while (0)
 
-void grain128a_transform (const u32x key[4], const u32 iv[3], const u32 plain[2], u64x out)
+void grain128a_transform (const u32x key[4], const u32 iv[3], const u32 plain[2], u8x out[8])
 {
   /**
    * Initialize registers
    */
  
-  u8x  outbit  = 0;
+  u32x  outbit  = 0;
 
   u32x LFSR[4];
   u32x NFSR[4];
@@ -100,11 +100,10 @@ void grain128a_transform (const u32x key[4], const u32 iv[3], const u32 plain[2]
   NFSR[1] = key[1];
   NFSR[2] = key[2];
   NFSR[3] = key[3];
-
-
+  
   /* do initial clockings */
 
-  for (u8 i = 0; i < 256; i++)
+  for (u8 i = 0; i < 128; i++)
   {
     update_keystream();
 
@@ -112,9 +111,16 @@ void grain128a_transform (const u32x key[4], const u32 iv[3], const u32 plain[2]
     NFSR[3] ^= ((outbit << 31) & 0x80000000);
   }
 
-  u8 k = 0;
+  for (u8 i = 0; i < 128; i++)
+  {
+    update_keystream();
 
-  // printf("\n");
+    LFSR[3] ^= ((outbit << 31) & 0x80000000);
+    NFSR[3] ^= ((outbit << 31) & 0x80000000);
+  }
+
+  u32 k = 0;
+
   for (u8 i = 0; i < 8; i++)
   {
 
@@ -122,12 +128,11 @@ void grain128a_transform (const u32x key[4], const u32 iv[3], const u32 plain[2]
     for (u8 j = 0; j < 8; j++)
     {
       update_keystream();
-      k |= outbit << j;
+      k ^= (outbit << j);
     }
-
-    out <<= 8;
-    out  ^= k;
+    out[i] = k;
   }
+
 }
 
 __kernel void m15600_m04 (__global pw_t *pws, __global const kernel_rule_t *rules_buf, __global const comb_t *combs_buf, __global const bf_t *bfs_buf, __global void *tmps, __global void *hooks, __global const u32 *bitmaps_buf_s1_a, __global const u32 *bitmaps_buf_s1_b, __global const u32 *bitmaps_buf_s1_c, __global const u32 *bitmaps_buf_s1_d, __global const u32 *bitmaps_buf_s2_a, __global const u32 *bitmaps_buf_s2_b, __global const u32 *bitmaps_buf_s2_c, __global const u32 *bitmaps_buf_s2_d, __global plain_t *plains_buf, __global const digest_t *digests_buf, __global u32 *hashes_shown, __global const salt_t *salt_bufs, __global const grain128a_t *esalt_bufs, __global u32 *d_return_buf, __global u32 *d_scryptV0_buf, __global u32 *d_scryptV1_buf, __global u32 *d_scryptV2_buf, __global u32 *d_scryptV3_buf, const u32 bitmap_mask, const u32 bitmap_shift1, const u32 bitmap_shift2, const u32 salt_pos, const u32 loop_pos, const u32 loop_cnt, const u32 il_cnt, const u32 digests_cnt, const u32 digests_offset, const u32 combs_mode, const u32 gid_max)
@@ -262,15 +267,21 @@ __kernel void m15600_s04 (__global pw_t *pws, __global const kernel_rule_t *rule
   {
     u32x w0[4] = { 0 };
     u32x w1[4] = { 0 };
+    u32x testkey[4] = { 0 };
     
     const u32x out_len = apply_rules_vect(pw_buf0, pw_buf1, pw_len, rules_buf, il_pos, w0, w1);
 
     u32x digest[4] = { 0 };
-    u64x out = 0;
+    u8x out[8]    = { 0 };
+
+    testkey[0] = 0x00000000;
+    testkey[1] = 0x00000000;
+    testkey[2] = 0x00000000;
+    testkey[3] = 0x00000000;
 
     grain128a_transform (w0, iv, plain, out);
 
-    printf("out: %llu\n", out);
+    printf("out: %02x%02x%02x%02x%02x%02x%02x%02x\n", out[0], out[1], out[2], out[3], out[4], out[5], out[6], out[7]);
 
     const u32x r0 = digest[0];
     const u32x r1 = digest[1];
